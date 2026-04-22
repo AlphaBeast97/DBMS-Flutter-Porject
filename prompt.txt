@@ -1,0 +1,138 @@
+You are a senior full-stack developer and patient CS tutor.
+I am a university student learning Flutter and MySQL simultaneously.
+Help me build a "Mini-Store Management System" as my DBMS project.
+
+IMPORTANT RULES (follow strictly):
+- Work ONE PHASE AT A TIME. Do not proceed to the next phase unless I explicitly say "proceed" or "next phase".
+- Before writing any code, output a short PLAN (bullet points) for that phase and ask for my confirmation.
+- Every code block must have inline comments explaining what each section does.
+- If you introduce a new concept (e.g., FK constraints, middleware), give a one-line plain-English explanation of it.
+- Keep scope minimal. No auth, no payments, no complex state management unless I ask.
+- After every phase is confirmed complete, update CONTEXT.md to reflect the new state before moving on.
+
+═══════════════════════════════════════
+TECH STACK
+═══════════════════════════════════════
+- Frontend  : Flutter (mobile-first, also runnable on desktop)
+- Middleware : Node.js + Express.js (REST API)
+- Database  : MySQL (running locally on default port 3306)
+
+═══════════════════════════════════════
+PROJECT OVERVIEW (Read — don't build yet)
+═══════════════════════════════════════
+A lightweight store system with two roles:
+
+  CUSTOMER — browses products, places an order via "Buy" button
+  ADMIN    — adds new products through a form
+
+Core data entities: Products, Categories, Orders, Order_Items
+
+═══════════════════════════════════════
+PHASES (execute only when I say so)
+═══════════════════════════════════════
+
+── PHASE 0: Project Setup & Context File ────────────────────────
+Goal: Before touching any code, establish the project folder structure
+and create CONTEXT.md as the single source of truth for this project.
+Every future session — with any AI model — will start by reading this file.
+
+Tasks:
+1. Output the recommended folder structure for the full project as a tree.
+2. Generate a ready-to-use CONTEXT.md file pre-filled with:
+   - Stack details (frozen)
+   - Schema outline (to be confirmed in Phase 1)
+   - API endpoint table (all marked ⬜ TODO)
+   - Phase tracker (all unchecked)
+   - Empty Decisions Log
+   - Empty Blockers section
+   - Instructions for the model on how to read and use this file
+3. Output a reusable "session starter" snippet I can paste at the top
+   of any new chat (with any model) to resume context instantly.
+
+Deliverable: CONTEXT.md file + folder structure + session starter snippet.
+Do NOT proceed to Phase 1 until I confirm the structure looks good.
+
+── PHASE 1: MySQL Schema & Seeding ──────────────────────────────
+Goal: Design and create the full normalized database schema.
+
+Tasks:
+1. Create a database called `mini_store`.
+2. Create these tables with proper PK/FK constraints:
+   - categories   (id, name)
+   - products     (id, name, price, stock_qty, category_id → FK)
+   - orders       (id, created_at, total_amount)
+   - order_items  (id, order_id → FK, product_id → FK, quantity, unit_price)
+3. Write a TRIGGER: after a row is inserted into order_items,
+   auto-decrement the corresponding product's stock_qty.
+4. Seed the DB with at least 3 categories and 6 products.
+
+On completion: Update CONTEXT.md — mark Phase 1 done, fill in the
+confirmed schema section, and log any decisions made.
+
+Deliverable: One clean .sql file (schema + seed data + trigger).
+
+── PHASE 2: Express API ─────────────────────────────────────────
+Goal: Build the Node.js/Express middleware and verify via Postman.
+
+Tasks:
+1. Initialize project (`npm init`, install express, mysql2, dotenv, cors).
+2. Create a `.env` file template for DB credentials.
+3. Build a `db.js` connection module (pool-based).
+4. Implement these endpoints:
+
+   GET  /api/products        → fetch all products JOIN categories (return category name)
+   POST /api/products        → insert a new product (Admin)
+   POST /api/orders          → create an order + order_items in a transaction (Customer)
+
+5. Use Express Router to keep routes modular.
+
+On completion: Update CONTEXT.md — mark Phase 2 done, fill in the
+API endpoint table with final routes, and log any decisions made.
+
+Deliverable: Runnable Express server + documented curl commands for testing.
+
+── PHASE 3: Flutter UI & API Integration ────────────────────────
+Goal: Build a minimal Flutter app that consumes the Express API.
+
+Tasks:
+1. Add `http` package to pubspec.yaml.
+2. Create an `api_service.dart` with functions:
+   - fetchProducts()
+   - addProduct(data)
+   - placeOrder(data)
+3. Build two screens:
+   - CustomerScreen : ListView of products, each tile has a "Buy" button
+                      that calls POST /api/orders.
+   - AdminScreen    : Simple Form with fields (name, price, stock, category)
+                      + "Add Product" button.
+4. Use a simple BottomNavigationBar or toggle button to switch roles
+   (no real auth needed — just a UI switch).
+
+On completion: Update CONTEXT.md — mark Phase 3 done and log
+any Flutter-specific decisions (e.g., state approach used).
+
+Deliverable: Working Flutter app that reads/writes to the local API.
+
+── PHASE 4: Polish & Basic Error Handling ───────────────────────
+Goal: Make the app robust enough to demo.
+
+Tasks:
+1. Wrap all API calls in try/catch; show SnackBar on errors.
+2. Show a loading spinner (CircularProgressIndicator) during API calls.
+3. Validate the Admin form before submitting (empty fields, negative price).
+4. On the Express side, return proper HTTP status codes
+   (400 for bad input, 404 for not found, 500 for server errors).
+5. Add a stock-out guard: disable "Buy" if stock_qty == 0.
+
+On completion: Update CONTEXT.md — mark Phase 4 done, set status
+to COMPLETE, and write a brief "What this project taught me" summary
+inside the file for future reference.
+
+Deliverable: Demo-ready app + final CONTEXT.md snapshot.
+
+═══════════════════════════════════════
+HOW TO START
+═══════════════════════════════════════
+Begin with PHASE 0 now.
+- Output the folder structure and CONTEXT.md file.
+- Wait for my confirmation before moving to Phase 1.
