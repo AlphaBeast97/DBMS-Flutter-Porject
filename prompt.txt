@@ -1,6 +1,6 @@
 You are a senior full-stack developer and patient CS tutor.
 I am a university student learning Flutter and MySQL simultaneously.
-Help me build a "Mini-Store Management System" as my DBMS project.
+Help me build a "TechFix – Digital Repair Workflow Manager" as my DBMS project.
 
 IMPORTANT RULES (follow strictly):
 - Work ONE PHASE AT A TIME. Do not proceed to the next phase unless I explicitly say "proceed" or "next phase".
@@ -20,12 +20,13 @@ TECH STACK
 ═══════════════════════════════════════
 PROJECT OVERVIEW (Read — don't build yet)
 ═══════════════════════════════════════
-A lightweight store system with two roles:
+A centralized repair workflow management system for local repair shops with three roles:
 
-  CUSTOMER — browses products, places an order via "Buy" button
-  ADMIN    — adds new products through a form
+  TECHNICIAN — checks in devices, creates repair jobs, updates job status, logs parts used
+  MANAGER    — views dashboards, tracks repair jobs, manages inventory
+  CUSTOMER   — checks repair status of their device
 
-Core data entities: Products, Categories, Orders, Order_Items
+Core data entities: Customers, Devices, Repair_Jobs, Inventory_Usage
 
 ═══════════════════════════════════════
 PHASES (execute only when I say so)
@@ -56,15 +57,15 @@ Do NOT proceed to Phase 1 until I confirm the structure looks good.
 Goal: Design and create the full normalized database schema.
 
 Tasks:
-1. Create a database called `mini_store`.
+1. Create a database called `techfix`.
 2. Create these tables with proper PK/FK constraints:
-   - categories   (id, name)
-   - products     (id, name, price, stock_qty, category_id → FK)
-   - orders       (id, created_at, total_amount)
-   - order_items  (id, order_id → FK, product_id → FK, quantity, unit_price)
-3. Write a TRIGGER: after a row is inserted into order_items,
-   auto-decrement the corresponding product's stock_qty.
-4. Seed the DB with at least 3 categories and 6 products.
+   - customers       (customer_id, name, phone, email)
+   - devices         (device_id, customer_id → FK, type, brand, model, serial_number)
+   - repair_jobs     (job_id, device_id → FK, description, estimated_cost, status ENUM, created_at)
+   - inventory_usage (usage_id, job_id → FK, part_name, part_cost)
+3. Write a TRIGGER: after a repair_job status is updated to 'Delivered',
+   calculate and store the final_cost by summing all inventory_usage costs.
+4. Seed the DB with at least 5 customers, 8 devices, and 10 repair jobs in various statuses.
 
 On completion: Update CONTEXT.md — mark Phase 1 done, fill in the
 confirmed schema section, and log any decisions made.
@@ -80,9 +81,13 @@ Tasks:
 3. Build a `db.js` connection module (pool-based).
 4. Implement these endpoints:
 
-   GET  /api/products        → fetch all products JOIN categories (return category name)
-   POST /api/products        → insert a new product (Admin)
-   POST /api/orders          → create an order + order_items in a transaction (Customer)
+   POST /api/customers                 → register a new customer
+   POST /api/devices                   → check in a device for repair
+   POST /api/repair-jobs               → create a repair job (Technician)
+   GET  /api/repair-jobs               → fetch all repair jobs with optional status filter
+   PUT  /api/repair-jobs/:job_id       → update job status or description (Technician)
+   POST /api/inventory-usage           → log parts used in a repair
+   GET  /api/customers/:customer_id    → fetch customer with all devices and repair jobs
 
 5. Use Express Router to keep routes modular.
 
@@ -93,15 +98,19 @@ Deliverable: Runnable Express server + documented curl commands for testing.
 
 ── PHASE 3: Flutter UI & API Integration ────────────────────────
 Goal: Build a minimal Flutter app that consumes the Express API.
-
-Tasks:
-1. Add `http` package to pubspec.yaml.
-2. Create an `api_service.dart` with functions:
-   - fetchProducts()
-   - addProduct(data)
-   - placeOrder(data)
-3. Build two screens:
-   - CustomerScreen : ListView of products, each tile has a "Buy" button
+checkInDevice(customerData, deviceData)
+   - createRepairJob(deviceId, description, estimatedCost)
+   - fetchRepairJobs(statusFilter)
+   - updateJobStatus(jobId, newStatus)
+   - logPartUsed(jobId, partName, partCost)
+   - fetchCustomerRepairs(customerId)
+3. Build three screens:
+   - TechnicianScreen : Form to check in device + ListView of jobs to repair
+                        (with status update buttons)
+   - ManagerScreen    : Dashboard showing all jobs with status breakdown,
+                        ability to view job details and parts used.
+   - CustomerScreen   : Search by phone number, view repair status.
+4. Use a BottomNavigationBar or tab viewe has a "Buy" button
                       that calls POST /api/orders.
    - AdminScreen    : Simple Form with fields (name, price, stock, category)
                       + "Add Product" button.
@@ -111,10 +120,11 @@ Tasks:
 On completion: Update CONTEXT.md — mark Phase 3 done and log
 any Flutter-specific decisions (e.g., state approach used).
 
-Deliverable: Working Flutter app that reads/writes to the local API.
-
-── PHASE 4: Polish & Basic Error Handling ───────────────────────
-Goal: Make the app robust enough to demo.
+Deliverable:all forms before submitting (empty fields, invalid phone, negative costs).
+4. On the Express side, return proper HTTP status codes
+   (400 for bad input, 404 for not found, 500 for server errors).
+5. Add validation guards: prevent status update to 'Ready' without parts logged,
+   prevent duplicate device check-ins for same customer on same day
 
 Tasks:
 1. Wrap all API calls in try/catch; show SnackBar on errors.

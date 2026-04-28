@@ -1,4 +1,4 @@
-# Mini-Store Management System Context
+# TechFix – Digital Repair Workflow Manager Context
 
 ## Purpose
 
@@ -12,11 +12,12 @@ This file is the single source of truth for the project. Before making changes, 
 
 ## Project Goal
 
-Build a lightweight mini-store system with:
+Build a centralized repair workflow management system for local repair shops:
 
-- CUSTOMER role for browsing products and placing orders
-- ADMIN role for adding products
-- Core entities: Products, Categories, Orders, Order_Items
+- TECHNICIAN role to update job status and log repairs
+- ADMIN/MANAGER role to view dashboards and manage inventory
+- CUSTOMER role to check repair status
+- Core entities: Customers, Devices, Repair_Jobs, Inventory_Usage
 
 ## Phase 0 Agenda
 
@@ -34,20 +35,24 @@ Status: TO BE CONFIRMED IN PHASE 1
 
 Planned entities:
 
-- categories
-- products
-- orders
-- order_items
+- customers (customer_id, name, phone, email)
+- devices (device_id, customer_id FK, type, brand, model, serial_number)
+- repair_jobs (job_id, device_id FK, description, estimated_cost, status, created_at)
+- inventory_usage (usage_id, job_id FK, part_name, part_cost)
 
 ## API Endpoint Table
 
 Status: ALL TODO UNTIL PHASE 2
 
-| Method | Route         | Purpose                               | Status  |
-| ------ | ------------- | ------------------------------------- | ------- |
-| GET    | /api/products | Fetch all products with category name | ⬜ TODO |
-| POST   | /api/products | Add a new product                     | ⬜ TODO |
-| POST   | /api/orders   | Create order with items               | ⬜ TODO |
+| Method | Route                    | Purpose                                     | Status  |
+| ------ | ------------------------ | ------------------------------------------- | ------- |
+| POST   | /api/customers           | Register a new customer                     | ⬜ TODO |
+| POST   | /api/devices             | Check in a device for repair                | ⬜ TODO |
+| POST   | /api/repair-jobs         | Create a repair job                         | ⬜ TODO |
+| GET    | /api/repair-jobs         | Fetch all repair jobs with status filtering | ⬜ TODO |
+| PUT    | /api/repair-jobs/:job_id | Update job status or final cost             | ⬜ TODO |
+| POST   | /api/inventory-usage     | Log parts used in a repair                  | ⬜ TODO |
+| GET    | /api/customers/:id       | Fetch customer with all associated devices  | ⬜ TODO |
 
 ## Phase Tracker
 
