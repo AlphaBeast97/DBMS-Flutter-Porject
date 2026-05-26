@@ -12,3 +12,4 @@ Phase 1 complete.
 
 - Single script: database/techfix.sql
 - Use Workbench-friendly delimiter blocks.
+- Includes organizations, employees, and login/cancel routines.

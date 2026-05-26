@@ -35,10 +35,12 @@ Status: CONFIRMED IN PHASE 1
 
 Confirmed entities:
 
-- customers (customer_id, name, phone, email, created_at)
-- devices (device_id, customer_id FK, type, brand, model, serial_number, created_at)
-- repair_jobs (job_id, device_id FK, description, estimated_cost, status, created_at, final_cost)
-- inventory_usage (usage_id, job_id FK, part_name, part_cost, created_at)
+- organizations (organization_id, name, created_at)
+- employees (employee_id, organization_id FK, name, email, password_hash, role, created_at)
+- customers (customer_id, organization_id FK, created_by_employee_id FK, name, phone, email, created_at)
+- devices (device_id, customer_id FK, created_by_employee_id FK, type, brand, model, serial_number, created_at)
+- repair_jobs (job_id, device_id FK, created_by_employee_id FK, description, estimated_cost, status, created_at, final_cost)
+- inventory_usage (usage_id, job_id FK, logged_by_employee_id FK, part_name, part_cost, created_at)
 
 ## API Endpoint Table
 
@@ -66,6 +68,7 @@ Status: ALL TODO UNTIL PHASE 2
 
 - All data operations use stored procedures/functions in MySQL; backend calls routines only.
 - Added root and per-part AGENTS.md + CONTEXT.md (backend, database, frontend).
+- Introduced organizations and employees with role-based access; customers can cancel only when status is Pending.
 
 ## Blockers
 
@@ -93,6 +96,7 @@ Status: ALL TODO UNTIL PHASE 2
 - MySQL schema created with FK constraints, stored procedures, functions, and trigger
 - Seed data added via stored procedures
 - Single script: database/techfix.sql
+- Revised schema to include organizations, employees, basic login routines, and Cancelled status
 
 ### Phase 2
 
