@@ -60,7 +60,7 @@ Status: ALL TODO UNTIL PHASE 2
 
 - [x] Phase 0: Project Setup & Context File
 - [x] Phase 1: MySQL Schema & Seeding
-- [ ] Phase 2: Express API
+- [ ] Phase 2: Express API (started: skeleton only)
 - [ ] Phase 3: Flutter UI & API Integration
 - [ ] Phase 4: Polish & Basic Error Handling
 
@@ -100,7 +100,9 @@ Status: ALL TODO UNTIL PHASE 2
 
 ### Phase 2
 
-- Pending
+- Express skeleton added with `app.js` and `server.js`.
+- Health check endpoint available at GET /health.
+- Routes, controllers, and middleware folders are still empty.
 
 ### Phase 3
 
@@ -112,4 +114,4 @@ Status: ALL TODO UNTIL PHASE 2
 
 ## Final Summary
 
-Status: PHASE 1 COMPLETE
+Status: PHASE 2 STARTED (backend skeleton only)
