@@ -48,13 +48,13 @@ Status: ALL TODO UNTIL PHASE 2
 
 | Method | Route                    | Purpose                                     | Status  |
 | ------ | ------------------------ | ------------------------------------------- | ------- |
-| POST   | /api/customers           | Register a new customer                     | ⬜ TODO |
-| POST   | /api/devices             | Check in a device for repair                | ⬜ TODO |
-| POST   | /api/repair-jobs         | Create a repair job                         | ⬜ TODO |
+| POST   | /api/customers           | Register a new customer                     | ✅ DONE |
+| POST   | /api/devices             | Check in a device for repair                | ✅ DONE |
+| POST   | /api/repair-jobs         | Create a repair job                         | ✅ DONE |
 | GET    | /api/repair-jobs         | Fetch all repair jobs with status filtering | ✅ DONE |
-| PUT    | /api/repair-jobs/:job_id | Update job status or final cost             | ⬜ TODO |
-| POST   | /api/inventory-usage     | Log parts used in a repair                  | ⬜ TODO |
-| GET    | /api/customers/:id       | Fetch customer with all associated devices  | ⬜ TODO |
+| PUT    | /api/repair-jobs/:job_id | Update job status or final cost             | ✅ DONE |
+| POST   | /api/inventory-usage     | Log parts used in a repair                  | ✅ DONE |
+| GET    | /api/customers/:id       | Fetch customer with all associated devices  | ✅ DONE |
 
 ## Phase Tracker
 
@@ -100,9 +100,10 @@ Status: ALL TODO UNTIL PHASE 2
 ### Phase 2
 
 - Express app wired with error handling and 404 response.
-- MySQL pool and stored-procedure helper added.
-- GET /api/repair-jobs implemented using stored procedure with validation.
-- Tests added with Node test runner + supertest.
+- MySQL pool and stored-procedure helper added (single + multi result sets).
+- All Phase 2 endpoints implemented using stored procedures with validation.
+- Tests added with Node test runner + supertest for endpoint behavior.
+- Access control (Owner/Employee/Customer) remains TODO after endpoints.
 
 ### Phase 3
 
@@ -114,4 +115,4 @@ Status: ALL TODO UNTIL PHASE 2
 
 ## Final Summary
 
-Status: PHASE 2 IN PROGRESS (GET /api/repair-jobs implemented)
+Status: PHASE 2 IN PROGRESS (all endpoints implemented, security pending)

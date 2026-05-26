@@ -6,6 +6,8 @@ export default function createRepairJobsRouter({ callProcedure }) {
   const controller = createRepairJobsController({ callProcedure });
 
   router.get("/", controller.getRepairJobs);
+  router.post("/", controller.createRepairJob);
+  router.put("/:job_id", controller.updateRepairJobStatus);
 
   return router;
 }

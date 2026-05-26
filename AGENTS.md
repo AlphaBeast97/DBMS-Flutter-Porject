@@ -7,3 +7,4 @@
 - Keep scope minimal (no auth, payments, or complex state unless requested).
 - Only edit root AGENTS.md and CONTEXT.md; other agents maintain their own area files.
 - Prefer node:test + supertest with injected procedure mocks for API tests.
+- Implement access control (Owner/Employee/Customer) only after endpoint coverage is complete and approved.
