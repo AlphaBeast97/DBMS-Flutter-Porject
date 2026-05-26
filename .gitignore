@@ -1,0 +1,57 @@
+/.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE / editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Environment files
+.env
+.env.*
+
+# Dependency directories
+node_modules/
+vendor/
+
+# Build outputs
+dist/
+build/
+out/
+target/
+bin/
+obj/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Java / Kotlin / Gradle
+.gradle/
+*.class
+
+# C / C++ / CMake
+CMakeFiles/
+CMakeCache.txt
+cmake-build-*/
+Makefile
+
+# Archives / packaged artifacts
+*.zip
+*.tar
+*.gz
+*.rar
+*.7z
+
+# Misc
+.cache/
