@@ -51,7 +51,7 @@ Status: ALL TODO UNTIL PHASE 2
 | POST   | /api/customers           | Register a new customer                     | ⬜ TODO |
 | POST   | /api/devices             | Check in a device for repair                | ⬜ TODO |
 | POST   | /api/repair-jobs         | Create a repair job                         | ⬜ TODO |
-| GET    | /api/repair-jobs         | Fetch all repair jobs with status filtering | ⬜ TODO |
+| GET    | /api/repair-jobs         | Fetch all repair jobs with status filtering | ✅ DONE |
 | PUT    | /api/repair-jobs/:job_id | Update job status or final cost             | ⬜ TODO |
 | POST   | /api/inventory-usage     | Log parts used in a repair                  | ⬜ TODO |
 | GET    | /api/customers/:id       | Fetch customer with all associated devices  | ⬜ TODO |
@@ -95,14 +95,14 @@ Status: ALL TODO UNTIL PHASE 2
 
 - MySQL schema created with FK constraints, stored procedures, functions, and trigger
 - Seed data added via stored procedures
-- Single script: database/techfix.sql
 - Revised schema to include organizations, employees, basic login routines, and Cancelled status
 
 ### Phase 2
 
-- Express skeleton added with `app.js` and `server.js`.
-- Health check endpoint available at GET /health.
-- Routes, controllers, and middleware folders are still empty.
+- Express app wired with error handling and 404 response.
+- MySQL pool and stored-procedure helper added.
+- GET /api/repair-jobs implemented using stored procedure with validation.
+- Tests added with Node test runner + supertest.
 
 ### Phase 3
 
@@ -114,4 +114,4 @@ Status: ALL TODO UNTIL PHASE 2
 
 ## Final Summary
 
-Status: PHASE 2 STARTED (backend skeleton only)
+Status: PHASE 2 IN PROGRESS (GET /api/repair-jobs implemented)

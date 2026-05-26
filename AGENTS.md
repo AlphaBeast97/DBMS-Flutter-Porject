@@ -6,3 +6,4 @@
 - Update the root CONTEXT.md at the end of each completed phase.
 - Keep scope minimal (no auth, payments, or complex state unless requested).
 - Only edit root AGENTS.md and CONTEXT.md; other agents maintain their own area files.
+- Prefer node:test + supertest with injected procedure mocks for API tests.
