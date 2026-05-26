@@ -1,4 +1,8 @@
-import { parseOptionalNumber, parsePositiveInt, requireString } from "../utils/validation.js";
+import {
+  parseOptionalNumber,
+  parsePositiveInt,
+  requireString,
+} from "../utils/validation.js";
 
 export function createInventoryUsageController({ callProcedure }) {
   return {
@@ -29,13 +33,13 @@ export function createInventoryUsageController({ callProcedure }) {
           employeeId,
           jobId,
           partName,
-          partCost
+          partCost,
         ]);
 
         return res.status(201).json({ data: rows[0] || {} });
       } catch (err) {
         return next(err);
       }
-    }
+    },
   };
 }

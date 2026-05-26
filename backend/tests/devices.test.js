@@ -5,7 +5,7 @@ import { createApp } from "../src/app.js";
 
 test("POST /api/devices validates required fields", async () => {
   const app = createApp({
-    callProcedure: async () => []
+    callProcedure: async () => [],
   });
 
   const response = await request(app).post("/api/devices").send({});
@@ -17,7 +17,7 @@ test("POST /api/devices validates required fields", async () => {
 test("POST /api/devices creates a device", async () => {
   const rows = [{ device_id: 200 }];
   const app = createApp({
-    callProcedure: async () => rows
+    callProcedure: async () => rows,
   });
 
   const response = await request(app).post("/api/devices").send({
@@ -26,7 +26,7 @@ test("POST /api/devices creates a device", async () => {
     type: "Laptop",
     brand: "Dell",
     model: "Inspiron 15",
-    serial_number: "DL-INSP-001"
+    serial_number: "DL-INSP-001",
   });
 
   assert.equal(response.status, 201);

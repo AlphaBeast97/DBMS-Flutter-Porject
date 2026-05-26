@@ -5,7 +5,7 @@ import { createApp } from "../src/app.js";
 
 test("GET /api/repair-jobs requires employee_id", async () => {
   const app = createApp({
-    callProcedure: async () => []
+    callProcedure: async () => [],
   });
 
   const response = await request(app).get("/api/repair-jobs");
@@ -16,11 +16,11 @@ test("GET /api/repair-jobs requires employee_id", async () => {
 
 test("GET /api/repair-jobs rejects invalid status", async () => {
   const app = createApp({
-    callProcedure: async () => []
+    callProcedure: async () => [],
   });
 
   const response = await request(app).get(
-    "/api/repair-jobs?employee_id=1&status=Unknown"
+    "/api/repair-jobs?employee_id=1&status=Unknown",
   );
 
   assert.equal(response.status, 400);
@@ -32,12 +32,12 @@ test("GET /api/repair-jobs returns data", async () => {
     {
       job_id: 1,
       status: "Pending",
-      description: "Battery drains quickly"
-    }
+      description: "Battery drains quickly",
+    },
   ];
 
   const app = createApp({
-    callProcedure: async () => rows
+    callProcedure: async () => rows,
   });
 
   const response = await request(app).get("/api/repair-jobs?employee_id=1");
@@ -48,7 +48,7 @@ test("GET /api/repair-jobs returns data", async () => {
 
 test("POST /api/repair-jobs validates required fields", async () => {
   const app = createApp({
-    callProcedure: async () => []
+    callProcedure: async () => [],
   });
 
   const response = await request(app).post("/api/repair-jobs").send({});
@@ -60,7 +60,7 @@ test("POST /api/repair-jobs validates required fields", async () => {
 test("POST /api/repair-jobs creates a job", async () => {
   const rows = [{ job_id: 55 }];
   const app = createApp({
-    callProcedure: async () => rows
+    callProcedure: async () => rows,
   });
 
   const response = await request(app).post("/api/repair-jobs").send({
@@ -68,7 +68,7 @@ test("POST /api/repair-jobs creates a job", async () => {
     device_id: 2,
     description: "Battery drains",
     estimated_cost: 4500,
-    status: "Pending"
+    status: "Pending",
   });
 
   assert.equal(response.status, 201);
@@ -77,7 +77,7 @@ test("POST /api/repair-jobs creates a job", async () => {
 
 test("PUT /api/repair-jobs/:job_id validates status", async () => {
   const app = createApp({
-    callProcedure: async () => []
+    callProcedure: async () => [],
   });
 
   const response = await request(app)
@@ -91,7 +91,7 @@ test("PUT /api/repair-jobs/:job_id validates status", async () => {
 test("PUT /api/repair-jobs/:job_id updates status", async () => {
   const rows = [{ rows_affected: 1 }];
   const app = createApp({
-    callProcedure: async () => rows
+    callProcedure: async () => rows,
   });
 
   const response = await request(app)

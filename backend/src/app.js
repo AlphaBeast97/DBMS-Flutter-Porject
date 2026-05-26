@@ -7,11 +7,14 @@ import createDevicesRouter from "./routes/devices.js";
 import createInventoryUsageRouter from "./routes/inventoryUsage.js";
 import createRepairJobsRouter from "./routes/repairJobs.js";
 
-export function createApp({ callProcedure: callProcedureFn, callProcedureMulti: callProcedureMultiFn } = {}) {
+export function createApp({
+  callProcedure: callProcedureFn,
+  callProcedureMulti: callProcedureMultiFn,
+} = {}) {
   const app = express();
   const procedures = {
     callProcedure: callProcedureFn || callProcedure,
-    callProcedureMulti: callProcedureMultiFn || callProcedureMulti
+    callProcedureMulti: callProcedureMultiFn || callProcedureMulti,
   };
 
   app.use(cors());

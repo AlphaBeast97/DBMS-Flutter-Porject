@@ -5,7 +5,7 @@ import { createApp } from "../src/app.js";
 
 test("POST /api/customers validates required fields", async () => {
   const app = createApp({
-    callProcedure: async () => []
+    callProcedure: async () => [],
   });
 
   const response = await request(app).post("/api/customers").send({});
@@ -17,7 +17,7 @@ test("POST /api/customers validates required fields", async () => {
 test("POST /api/customers creates a customer", async () => {
   const rows = [{ customer_id: 101 }];
   const app = createApp({
-    callProcedure: async () => rows
+    callProcedure: async () => rows,
   });
 
   const response = await request(app).post("/api/customers").send({
@@ -25,7 +25,7 @@ test("POST /api/customers creates a customer", async () => {
     employee_id: 2,
     name: "Ayesha Malik",
     phone: "03001234567",
-    email: "ayesha@example.com"
+    email: "ayesha@example.com",
   });
 
   assert.equal(response.status, 201);
@@ -38,9 +38,9 @@ test("GET /api/customers/:id returns grouped data", async () => {
       [{ customer_id: 1, name: "Ayesha Malik" }],
       [{ device_id: 10 }],
       [{ job_id: 20 }],
-      [{ usage_id: 30 }]
+      [{ usage_id: 30 }],
     ],
-    callProcedure: async () => []
+    callProcedure: async () => [],
   });
 
   const response = await request(app).get("/api/customers/1?employee_id=2");

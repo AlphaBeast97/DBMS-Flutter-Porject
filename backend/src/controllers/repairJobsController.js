@@ -1,7 +1,7 @@
 import {
   parseOptionalNumber,
   parsePositiveInt,
-  requireString
+  requireString,
 } from "../utils/validation.js";
 
 const LIST_STATUSES = new Set([
@@ -9,15 +9,10 @@ const LIST_STATUSES = new Set([
   "Repairing",
   "Ready",
   "Delivered",
-  "Cancelled"
+  "Cancelled",
 ]);
 
-const WRITE_STATUSES = new Set([
-  "Pending",
-  "Repairing",
-  "Ready",
-  "Delivered"
-]);
+const WRITE_STATUSES = new Set(["Pending", "Repairing", "Ready", "Delivered"]);
 
 export function createRepairJobsController({ callProcedure }) {
   return {
@@ -36,7 +31,7 @@ export function createRepairJobsController({ callProcedure }) {
 
         const rows = await callProcedure("sp_get_repair_jobs", [
           employeeId,
-          status || null
+          status || null,
         ]);
 
         return res.status(200).json({ data: rows });
@@ -77,7 +72,7 @@ export function createRepairJobsController({ callProcedure }) {
           deviceId,
           description,
           estimatedCost,
-          status || null
+          status || null,
         ]);
 
         return res.status(201).json({ data: rows[0] || {} });
@@ -110,13 +105,13 @@ export function createRepairJobsController({ callProcedure }) {
         const rows = await callProcedure("sp_update_repair_job_status", [
           employeeId,
           jobId,
-          status
+          status,
         ]);
 
         return res.status(200).json({ data: rows[0] || {} });
       } catch (err) {
         return next(err);
       }
-    }
+    },
   };
 }

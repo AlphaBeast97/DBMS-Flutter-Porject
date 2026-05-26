@@ -41,13 +41,13 @@ export function createDevicesController({ callProcedure }) {
           type,
           brand,
           model,
-          serialNumber
+          serialNumber,
         ]);
 
         return res.status(201).json({ data: rows[0] || {} });
       } catch (err) {
         return next(err);
       }
-    }
+    },
   };
 }

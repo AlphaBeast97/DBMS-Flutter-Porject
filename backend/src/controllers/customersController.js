@@ -1,6 +1,9 @@
 import { parsePositiveInt, requireString } from "../utils/validation.js";
 
-export function createCustomersController({ callProcedure, callProcedureMulti }) {
+export function createCustomersController({
+  callProcedure,
+  callProcedureMulti,
+}) {
   return {
     createCustomer: async (req, res, next) => {
       try {
@@ -31,7 +34,7 @@ export function createCustomersController({ callProcedure, callProcedureMulti })
           employeeId,
           name,
           phone,
-          email
+          email,
         ]);
 
         return res.status(201).json({ data: rows[0] || {} });
@@ -54,7 +57,7 @@ export function createCustomersController({ callProcedure, callProcedureMulti })
 
         const resultSets = await callProcedureMulti(
           "sp_get_customer_full_for_employee",
-          [employeeId, customerId]
+          [employeeId, customerId],
         );
 
         const customer = resultSets[0]?.[0] || null;
@@ -71,12 +74,12 @@ export function createCustomersController({ callProcedure, callProcedureMulti })
             customer,
             devices,
             repair_jobs: repairJobs,
-            inventory_usage: inventoryUsage
-          }
+            inventory_usage: inventoryUsage,
+          },
         });
       } catch (err) {
         return next(err);
       }
-    }
+    },
   };
 }

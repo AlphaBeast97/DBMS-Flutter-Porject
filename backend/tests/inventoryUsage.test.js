@@ -5,7 +5,7 @@ import { createApp } from "../src/app.js";
 
 test("POST /api/inventory-usage validates required fields", async () => {
   const app = createApp({
-    callProcedure: async () => []
+    callProcedure: async () => [],
   });
 
   const response = await request(app).post("/api/inventory-usage").send({});
@@ -17,14 +17,14 @@ test("POST /api/inventory-usage validates required fields", async () => {
 test("POST /api/inventory-usage logs usage", async () => {
   const rows = [{ usage_id: 301 }];
   const app = createApp({
-    callProcedure: async () => rows
+    callProcedure: async () => rows,
   });
 
   const response = await request(app).post("/api/inventory-usage").send({
     employee_id: 2,
     job_id: 5,
     part_name: "Battery pack",
-    part_cost: 3200
+    part_cost: 3200,
   });
 
   assert.equal(response.status, 201);
