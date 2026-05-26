@@ -14,10 +14,7 @@ class AppBackground extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                Color(0xFFFDF8F2),
-                Color(0xFFF6EBDD),
-              ],
+              colors: [Color(0xFFFDF8F2), Color(0xFFF6EBDD)],
             ),
           ),
         ),
@@ -53,10 +50,7 @@ class _GlowCircle extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: color,
-      ),
+      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
     );
   }
 }

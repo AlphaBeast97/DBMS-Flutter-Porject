@@ -36,8 +36,7 @@ class ManagerScreen extends StatelessWidget {
           const SizedBox(height: 28),
           const SectionHeader(title: 'Recent inventory usage'),
           const SizedBox(height: 12),
-          ...MockData.recentUsage
-              .map((usage) => InventoryCard(usage: usage)),
+          ...MockData.recentUsage.map((usage) => InventoryCard(usage: usage)),
         ],
       ),
     );

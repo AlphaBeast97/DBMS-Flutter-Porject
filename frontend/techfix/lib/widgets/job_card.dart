@@ -24,8 +24,8 @@ class JobCard extends StatelessWidget {
                   Text(
                     job.deviceLabel,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -39,9 +39,9 @@ class JobCard extends StatelessWidget {
                     child: Text(
                       job.status,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: statusColor,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        color: statusColor,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -64,8 +64,8 @@ class JobCard extends StatelessWidget {
                         ? 'Final: \$${job.finalCost!.toStringAsFixed(0)}'
                         : 'Estimate: \$${job.estimatedCost.toStringAsFixed(0)}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
