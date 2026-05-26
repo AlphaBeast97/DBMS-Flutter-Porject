@@ -31,14 +31,14 @@ Build a centralized repair workflow management system for local repair shops:
 
 ## Schema Outline
 
-Status: TO BE CONFIRMED IN PHASE 1
+Status: CONFIRMED IN PHASE 1
 
-Planned entities:
+Confirmed entities:
 
-- customers (customer_id, name, phone, email)
-- devices (device_id, customer_id FK, type, brand, model, serial_number)
-- repair_jobs (job_id, device_id FK, description, estimated_cost, status, created_at)
-- inventory_usage (usage_id, job_id FK, part_name, part_cost)
+- customers (customer_id, name, phone, email, created_at)
+- devices (device_id, customer_id FK, type, brand, model, serial_number, created_at)
+- repair_jobs (job_id, device_id FK, description, estimated_cost, status, created_at, final_cost)
+- inventory_usage (usage_id, job_id FK, part_name, part_cost, created_at)
 
 ## API Endpoint Table
 
@@ -56,15 +56,16 @@ Status: ALL TODO UNTIL PHASE 2
 
 ## Phase Tracker
 
-- [ ] Phase 0: Project Setup & Context File
-- [ ] Phase 1: MySQL Schema & Seeding
+- [x] Phase 0: Project Setup & Context File
+- [x] Phase 1: MySQL Schema & Seeding
 - [ ] Phase 2: Express API
 - [ ] Phase 3: Flutter UI & API Integration
 - [ ] Phase 4: Polish & Basic Error Handling
 
 ## Decisions Log
 
--
+- All data operations use stored procedures/functions in MySQL; backend calls routines only.
+- Added root and per-part AGENTS.md + CONTEXT.md (backend, database, frontend).
 
 ## Blockers
 
@@ -85,11 +86,13 @@ Status: ALL TODO UNTIL PHASE 2
 
 - Folder structure proposed
 - CONTEXT.md template prepared
-- Awaiting confirmation before implementation work begins
+- Phase confirmed and completed
 
 ### Phase 1
 
-- Pending
+- MySQL schema created with FK constraints, stored procedures, functions, and trigger
+- Seed data added via stored procedures
+- Single script: database/techfix.sql
 
 ### Phase 2
 
@@ -105,4 +108,4 @@ Status: ALL TODO UNTIL PHASE 2
 
 ## Final Summary
 
-Status: IN PROGRESS
+Status: PHASE 1 COMPLETE
