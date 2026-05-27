@@ -44,7 +44,7 @@ Confirmed entities:
 
 ## API Endpoint Table
 
-Status: ALL TODO UNTIL PHASE 2
+Status: IMPLEMENTED IN PHASE 2
 
 | Method | Route                    | Purpose                                     | Status  |
 | ------ | ------------------------ | ------------------------------------------- | ------- |
@@ -60,7 +60,7 @@ Status: ALL TODO UNTIL PHASE 2
 
 - [x] Phase 0: Project Setup & Context File
 - [x] Phase 1: MySQL Schema & Seeding
-- [ ] Phase 2: Express API (started: skeleton only)
+- [x] Phase 2: Express API
 - [ ] Phase 3: Flutter UI & API Integration
 - [ ] Phase 4: Polish & Basic Error Handling
 
@@ -101,7 +101,8 @@ Status: ALL TODO UNTIL PHASE 2
 
 - Express app wired with error handling and 404 response.
 - MySQL pool and stored-procedure helper added (single + multi result sets).
-- All Phase 2 endpoints implemented using stored procedures with validation.
+- API routes/controllers implemented for customers, devices, repair jobs, inventory usage.
+- Input validation helpers added for required fields and numeric parsing.
 - Tests added with Node test runner + supertest for endpoint behavior.
 - Access control (Owner/Employee/Customer) remains TODO after endpoints.
 
@@ -115,4 +116,4 @@ Status: ALL TODO UNTIL PHASE 2
 
 ## Final Summary
 
-Status: PHASE 2 IN PROGRESS (all endpoints implemented, security pending)
+Status: PHASE 2 COMPLETE (access control pending)
