@@ -14,12 +14,14 @@ if (runDbTests) {
   test("Integration flow with real database", async () => {
     const app = createApp();
     const uniqueTag = Date.now();
+    const authHeader =
+      "Basic " + Buffer.from("owner@techfix.com:Owner123").toString("base64");
 
     const customerResponse = await request(app)
       .post("/api/customers")
+      .set("Authorization", authHeader)
       .send({
         organization_id: 1,
-        employee_id: 1,
         name: `Integration Customer ${uniqueTag}`,
         phone: `0300${uniqueTag.toString().slice(-7)}`,
         email: `integration_${uniqueTag}@example.com`,
@@ -31,8 +33,8 @@ if (runDbTests) {
 
     const deviceResponse = await request(app)
       .post("/api/devices")
+      .set("Authorization", authHeader)
       .send({
-        employee_id: 1,
         customer_id: customerId,
         type: "Laptop",
         brand: "Dell",
@@ -44,13 +46,15 @@ if (runDbTests) {
     const deviceId = deviceResponse.body.data.device_id;
     assert.ok(deviceId);
 
-    const jobResponse = await request(app).post("/api/repair-jobs").send({
-      employee_id: 1,
-      device_id: deviceId,
-      description: "Integration test repair job",
-      estimated_cost: 5000,
-      status: "Pending",
-    });
+    const jobResponse = await request(app)
+      .post("/api/repair-jobs")
+      .set("Authorization", authHeader)
+      .send({
+        device_id: deviceId,
+        description: "Integration test repair job",
+        estimated_cost: 5000,
+        status: "Pending",
+      });
 
     assert.equal(jobResponse.status, 201);
     const jobId = jobResponse.body.data.job_id;
@@ -58,8 +62,8 @@ if (runDbTests) {
 
     const inventoryResponse = await request(app)
       .post("/api/inventory-usage")
+      .set("Authorization", authHeader)
       .send({
-        employee_id: 1,
         job_id: jobId,
         part_name: "Integration Part",
         part_cost: 1250,
@@ -70,20 +74,21 @@ if (runDbTests) {
 
     const updateResponse = await request(app)
       .put(`/api/repair-jobs/${jobId}`)
-      .send({ employee_id: 1, status: "Ready" });
+      .set("Authorization", authHeader)
+      .send({ status: "Ready" });
 
     assert.equal(updateResponse.status, 200);
 
-    const listResponse = await request(app).get(
-      "/api/repair-jobs?employee_id=1",
-    );
+    const listResponse = await request(app)
+      .get("/api/repair-jobs")
+      .set("Authorization", authHeader);
 
     assert.equal(listResponse.status, 200);
     assert.ok(Array.isArray(listResponse.body.data));
 
-    const customerDetailResponse = await request(app).get(
-      `/api/customers/${customerId}?employee_id=1`,
-    );
+    const customerDetailResponse = await request(app)
+      .get(`/api/customers/${customerId}`)
+      .set("Authorization", authHeader);
 
     assert.equal(customerDetailResponse.status, 200);
     assert.equal(

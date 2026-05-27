@@ -18,11 +18,14 @@ export function createRepairJobsController({ callProcedure }) {
   return {
     getRepairJobs: async (req, res, next) => {
       try {
-        const employeeId = parsePositiveInt(req.query.employee_id);
+        const employeeId = req.employee?.employee_id;
+        const requestedEmployeeId = parsePositiveInt(req.query.employee_id);
         const status = req.query.status;
 
-        if (!employeeId) {
-          return res.status(400).json({ error: "employee_id is required" });
+        if (requestedEmployeeId && requestedEmployeeId !== employeeId) {
+          return res
+            .status(403)
+            .json({ error: "employee_id does not match credentials" });
         }
 
         if (status && !LIST_STATUSES.has(status)) {
@@ -41,14 +44,17 @@ export function createRepairJobsController({ callProcedure }) {
     },
     createRepairJob: async (req, res, next) => {
       try {
-        const employeeId = parsePositiveInt(req.body.employee_id);
+        const employeeId = req.employee?.employee_id;
         const deviceId = parsePositiveInt(req.body.device_id);
+        const requestedEmployeeId = parsePositiveInt(req.body.employee_id);
         const description = requireString(req.body.description);
         const status = req.body.status;
         const estimatedCost = parseOptionalNumber(req.body.estimated_cost);
 
-        if (!employeeId) {
-          return res.status(400).json({ error: "employee_id is required" });
+        if (requestedEmployeeId && requestedEmployeeId !== employeeId) {
+          return res
+            .status(403)
+            .json({ error: "employee_id does not match credentials" });
         }
 
         if (!deviceId) {
@@ -82,12 +88,15 @@ export function createRepairJobsController({ callProcedure }) {
     },
     updateRepairJobStatus: async (req, res, next) => {
       try {
-        const employeeId = parsePositiveInt(req.body.employee_id);
+        const employeeId = req.employee?.employee_id;
         const jobId = parsePositiveInt(req.params.job_id);
+        const requestedEmployeeId = parsePositiveInt(req.body.employee_id);
         const status = req.body.status;
 
-        if (!employeeId) {
-          return res.status(400).json({ error: "employee_id is required" });
+        if (requestedEmployeeId && requestedEmployeeId !== employeeId) {
+          return res
+            .status(403)
+            .json({ error: "employee_id does not match credentials" });
         }
 
         if (!jobId) {

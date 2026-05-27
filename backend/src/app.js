@@ -2,6 +2,7 @@ import cors from "cors";
 import express from "express";
 import { callProcedure, callProcedureMulti } from "./db/callProcedure.js";
 import errorHandler from "./middleware/errorHandler.js";
+import createAuthRouter from "./routes/auth.js";
 import createCustomersRouter from "./routes/customers.js";
 import createDevicesRouter from "./routes/devices.js";
 import createInventoryUsageRouter from "./routes/inventoryUsage.js";
@@ -24,6 +25,7 @@ export function createApp({
     res.status(200).json({ status: "ok" });
   });
 
+  app.use("/api/auth", createAuthRouter(procedures));
   app.use("/api/customers", createCustomersRouter(procedures));
   app.use("/api/devices", createDevicesRouter(procedures));
   app.use("/api/repair-jobs", createRepairJobsRouter(procedures));

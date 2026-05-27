@@ -4,15 +4,18 @@ export function createDevicesController({ callProcedure }) {
   return {
     createDevice: async (req, res, next) => {
       try {
-        const employeeId = parsePositiveInt(req.body.employee_id);
+        const employeeId = req.employee?.employee_id;
+        const requestedEmployeeId = parsePositiveInt(req.body.employee_id);
         const customerId = parsePositiveInt(req.body.customer_id);
         const type = requireString(req.body.type);
         const brand = requireString(req.body.brand);
         const model = requireString(req.body.model);
         const serialNumber = requireString(req.body.serial_number);
 
-        if (!employeeId) {
-          return res.status(400).json({ error: "employee_id is required" });
+        if (requestedEmployeeId && requestedEmployeeId !== employeeId) {
+          return res
+            .status(403)
+            .json({ error: "employee_id does not match credentials" });
         }
 
         if (!customerId) {

@@ -7,18 +7,25 @@ export function createCustomersController({
   return {
     createCustomer: async (req, res, next) => {
       try {
-        const organizationId = parsePositiveInt(req.body.organization_id);
-        const employeeId = parsePositiveInt(req.body.employee_id);
+        const employeeId = req.employee?.employee_id;
+        const employeeOrgId = req.employee?.organization_id;
+        const requestedEmployeeId = parsePositiveInt(req.body.employee_id);
+        const requestedOrgId = parsePositiveInt(req.body.organization_id);
+        const organizationId = requestedOrgId || employeeOrgId;
         const name = requireString(req.body.name);
         const phone = requireString(req.body.phone);
         const email = requireString(req.body.email || "") || null;
 
-        if (!organizationId) {
-          return res.status(400).json({ error: "organization_id is required" });
+        if (requestedEmployeeId && requestedEmployeeId !== employeeId) {
+          return res
+            .status(403)
+            .json({ error: "employee_id does not match credentials" });
         }
 
-        if (!employeeId) {
-          return res.status(400).json({ error: "employee_id is required" });
+        if (requestedOrgId && requestedOrgId !== employeeOrgId) {
+          return res
+            .status(403)
+            .json({ error: "organization_id does not match credentials" });
         }
 
         if (!name) {
@@ -44,11 +51,14 @@ export function createCustomersController({
     },
     getCustomerById: async (req, res, next) => {
       try {
-        const employeeId = parsePositiveInt(req.query.employee_id);
+        const employeeId = req.employee?.employee_id;
+        const requestedEmployeeId = parsePositiveInt(req.query.employee_id);
         const customerId = parsePositiveInt(req.params.id);
 
-        if (!employeeId) {
-          return res.status(400).json({ error: "employee_id is required" });
+        if (requestedEmployeeId && requestedEmployeeId !== employeeId) {
+          return res
+            .status(403)
+            .json({ error: "employee_id does not match credentials" });
         }
 
         if (!customerId) {
