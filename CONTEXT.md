@@ -51,6 +51,8 @@ Status: IMPLEMENTED IN PHASE 2
 | POST   | /api/customers           | Register a new customer                     | ✅ DONE |
 | POST   | /api/devices             | Check in a device for repair                | ✅ DONE |
 | POST   | /api/repair-jobs         | Create a repair job                         | ✅ DONE |
+| POST   | /api/auth/employee       | Employee login via basic auth               | ✅ DONE |
+| POST   | /api/auth/customer       | Customer login via basic auth               | ✅ DONE |
 | GET    | /api/repair-jobs         | Fetch all repair jobs with status filtering | ✅ DONE |
 | PUT    | /api/repair-jobs/:job_id | Update job status or final cost             | ✅ DONE |
 | POST   | /api/inventory-usage     | Log parts used in a repair                  | ✅ DONE |
@@ -61,7 +63,7 @@ Status: IMPLEMENTED IN PHASE 2
 - [x] Phase 0: Project Setup & Context File
 - [x] Phase 1: MySQL Schema & Seeding
 - [x] Phase 2: Express API
-- [ ] Phase 3: Flutter UI & API Integration
+- [ ] Phase 3: Flutter UI & API Integration (started: UI scaffold only)
 - [ ] Phase 4: Polish & Basic Error Handling
 
 ## Decisions Log
@@ -96,19 +98,23 @@ Status: IMPLEMENTED IN PHASE 2
 - MySQL schema created with FK constraints, stored procedures, functions, and trigger
 - Seed data added via stored procedures
 - Revised schema to include organizations, employees, basic login routines, and Cancelled status
+- Patch script added for routine fixes: database/techfix_routines_patch.sql
 
 ### Phase 2
 
 - Express app wired with error handling and 404 response.
 - MySQL pool and stored-procedure helper added (single + multi result sets).
 - API routes/controllers implemented for customers, devices, repair jobs, inventory usage.
+- Auth endpoints added for employees and customers using Basic auth headers.
 - Input validation helpers added for required fields and numeric parsing.
-- Tests added with Node test runner + supertest for endpoint behavior.
+- Tests added with Node test runner + supertest, plus optional real DB integration test (RUN_DB_TESTS=1).
 - Access control (Owner/Employee/Customer) remains TODO after endpoints.
 
 ### Phase 3
 
-- Pending
+- Flutter app scaffolded with themed UI and home shell.
+- Screens added for customer status, technician console, and manager overview.
+- UI uses mock data/models; no API integration yet.
 
 ### Phase 4
 
@@ -116,4 +122,4 @@ Status: IMPLEMENTED IN PHASE 2
 
 ## Final Summary
 
-Status: PHASE 2 COMPLETE (access control pending)
+Status: PHASE 3 STARTED (frontend UI scaffold, API integration pending)
