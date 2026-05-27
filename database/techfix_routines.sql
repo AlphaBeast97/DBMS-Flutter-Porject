@@ -142,7 +142,8 @@ BEGIN
     SELECT COUNT(*)
     INTO v_count
     FROM employees
-    WHERE email = p_email AND password_hash = p_password_hash;
+        WHERE email = p_email COLLATE utf8mb4_uca1400_ai_ci
+            AND password_hash = p_password_hash COLLATE utf8mb4_uca1400_ai_ci;
 
     IF v_count = 0 THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Invalid credentials.';
@@ -150,7 +151,8 @@ BEGIN
 
     SELECT employee_id, organization_id, name, email, role, created_at
     FROM employees
-    WHERE email = p_email AND password_hash = p_password_hash;
+        WHERE email = p_email COLLATE utf8mb4_uca1400_ai_ci
+            AND password_hash = p_password_hash COLLATE utf8mb4_uca1400_ai_ci;
 END$$
 DELIMITER ;
 
@@ -169,7 +171,7 @@ BEGIN
     SELECT COUNT(*)
     INTO v_count
     FROM customers
-    WHERE email = p_email;
+    WHERE email = p_email COLLATE utf8mb4_uca1400_ai_ci;
 
     IF v_count = 0 THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Customer not found.';
@@ -177,7 +179,7 @@ BEGIN
 
     SELECT customer_id, organization_id, name, phone, email, created_at
     FROM customers
-    WHERE email = p_email;
+    WHERE email = p_email COLLATE utf8mb4_uca1400_ai_ci;
 END$$
 DELIMITER ;
 
@@ -643,7 +645,7 @@ BEGIN
     SELECT customer_id
     INTO v_customer_id
     FROM customers
-    WHERE email = p_email;
+    WHERE email = p_email COLLATE utf8mb4_uca1400_ai_ci;
 
     IF v_customer_id IS NULL THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Customer not found.';
