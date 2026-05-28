@@ -12,4 +12,22 @@ class InventoryUsage {
     required this.loggedBy,
     required this.createdAt,
   });
+
+  factory InventoryUsage.fromApi(Map<String, dynamic> json) {
+    double parseAmount(dynamic value) {
+      if (value is num) return value.toDouble();
+      if (value is String) return double.tryParse(value) ?? 0;
+      return 0;
+    }
+
+    return InventoryUsage(
+      jobId: (json['job_id'] ?? 0) as int,
+      partName: (json['part_name'] ?? '').toString(),
+      partCost: parseAmount(json['part_cost']),
+      loggedBy: (json['logged_by'] ?? json['employee_name'] ?? '').toString(),
+      createdAt:
+          DateTime.tryParse((json['created_at'] ?? '').toString()) ??
+          DateTime.now(),
+    );
+  }
 }
