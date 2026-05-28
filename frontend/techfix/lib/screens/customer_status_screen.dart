@@ -19,6 +19,30 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
   final _customerIdController = TextEditingController();
   Future<Map<String, dynamic>>? _customerFuture;
   String? _errorMessage;
+  bool _isCustomerRole = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Check if logged-in user is a customer; if so, auto-load their data
+    _checkAndLoadCustomerData();
+  }
+
+  /// Check if user is a customer and auto-load their data
+  void _checkAndLoadCustomerData() {
+    final session = AppSessionScope.of(context);
+    final employee = session.employee;
+
+    if (employee == null) return;
+
+    final role = (employee['role'] as String?)?.trim() ?? '';
+    if (role.toLowerCase() == 'customer') {
+      setState(() {
+        _isCustomerRole = true;
+        _customerFuture = Future.value(employee);
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -75,35 +99,42 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Search by customer ID to see live status updates.',
+            _isCustomerRole
+                ? 'Here is your current repair status.'
+                : 'Search by customer ID to see live status updates.',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _customerIdController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    hintText: 'Customer ID',
-                    prefixIcon: const Icon(Icons.search),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
+
+          // Only show search if user is NOT a customer
+          if (!_isCustomerRole) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _customerIdController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      hintText: 'Customer ID',
+                      prefixIcon: const Icon(Icons.search),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              ElevatedButton(
-                onPressed: _loadCustomer,
-                child: const Text('Load'),
-              ),
-            ],
-          ),
+                const SizedBox(width: 12),
+                ElevatedButton(
+                  onPressed: _loadCustomer,
+                  child: const Text('Load'),
+                ),
+              ],
+            ),
+          ],
+
           if (_errorMessage != null) ...[
             const SizedBox(height: 8),
             Text(
@@ -114,12 +145,12 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
             ),
           ],
           const SizedBox(height: 24),
-          if (_customerFuture == null)
+          if (_customerFuture == null && !_isCustomerRole)
             Text(
               'Load a customer to view their repair jobs.',
               style: Theme.of(context).textTheme.bodySmall,
             )
-          else
+          else if (_customerFuture != null)
             FutureBuilder<Map<String, dynamic>>(
               future: _customerFuture,
               builder: (context, snapshot) {
@@ -128,11 +159,25 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
                 }
 
                 if (snapshot.hasError || !snapshot.hasData) {
-                  return Text(
-                    'Unable to load customer data.',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.redAccent),
+                  final error = snapshot.error?.toString() ?? 'Unknown error';
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Unable to load customer data',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.redAccent,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        error,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.redAccent,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   );
                 }
 

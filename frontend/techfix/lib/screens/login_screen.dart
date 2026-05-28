@@ -13,13 +13,20 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
+enum AuthMode { employee, customer }
+
 class _LoginScreenState extends State<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
+  final _employeeFormKey = GlobalKey<FormState>();
+  final _customerFormKey = GlobalKey<FormState>();
+
   late final TextEditingController _baseUrlController;
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _employeeEmailController = TextEditingController();
+  final _employeePasswordController = TextEditingController();
+  final _customerEmailController = TextEditingController();
+
   bool _isSubmitting = false;
   String? _errorMessage;
+  AuthMode _authMode = AuthMode.employee;
 
   @override
   void initState() {
@@ -30,8 +37,9 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void dispose() {
     _baseUrlController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
+    _employeeEmailController.dispose();
+    _employeePasswordController.dispose();
+    _customerEmailController.dispose();
     super.dispose();
   }
 
@@ -42,8 +50,9 @@ class _LoginScreenState extends State<LoginScreen> {
     return ApiConfig.androidDeviceBaseUrl;
   }
 
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) {
+  /// Submit employee authentication
+  Future<void> _submitEmployee() async {
+    if (!_employeeFormKey.currentState!.validate()) {
       return;
     }
 
@@ -54,8 +63,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final session = AppSessionScope.of(context);
     final baseUrl = _baseUrlController.text.trim();
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
+    final email = _employeeEmailController.text.trim();
+    final password = _employeePasswordController.text;
 
     try {
       final api = TechFixApi(
@@ -78,7 +87,54 @@ class _LoginScreenState extends State<LoginScreen> {
       ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeShell()));
     } catch (error) {
       setState(() {
-        _errorMessage = 'Login failed. Check credentials and base URL.';
+        _errorMessage = error.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
+
+  /// Submit customer authentication
+  Future<void> _submitCustomer() async {
+    if (!_customerFormKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+      _errorMessage = null;
+    });
+
+    final session = AppSessionScope.of(context);
+    final baseUrl = _baseUrlController.text.trim();
+    final email = _customerEmailController.text.trim();
+
+    try {
+      final api = TechFixApi(baseUrl: baseUrl, email: email, password: '');
+
+      // Authenticate customer
+      await api.authenticateCustomer(email);
+
+      // Load customer's own data
+      final customerData = await api.getCustomerMe();
+
+      session.updateCredentials(baseUrl: baseUrl, email: email, password: '');
+
+      // Store customer data (mark as customer type)
+      final customer = {...customerData, 'role': 'Customer'};
+      session.setEmployee(customer);
+
+      if (!mounted) return;
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeShell()));
+    } catch (error) {
+      setState(() {
+        _errorMessage = error.toString();
       });
     } finally {
       if (mounted) {
@@ -100,87 +156,148 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Card(
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Sign in to TechFix',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Use employee credentials to access live data.',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      const SizedBox(height: 20),
-                      TextFormField(
-                        controller: _baseUrlController,
-                        decoration: const InputDecoration(
-                          labelText: 'API Base URL',
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Sign in to TechFix',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Auth mode selector
+                    SegmentedButton<AuthMode>(
+                      segments: const [
+                        ButtonSegment(
+                          value: AuthMode.employee,
+                          label: Text('Employee'),
                         ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Base URL is required';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _emailController,
-                        decoration: const InputDecoration(
-                          labelText: 'Employee email',
-                        ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Email is required';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _passwordController,
-                        obscureText: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Password',
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Password is required';
-                          }
-                          return null;
-                        },
-                      ),
-                      if (_errorMessage != null) ...[
-                        const SizedBox(height: 12),
-                        Text(
-                          _errorMessage!,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: Colors.redAccent),
+                        ButtonSegment(
+                          value: AuthMode.customer,
+                          label: Text('Customer'),
                         ),
                       ],
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _isSubmitting ? null : _submit,
-                          child: _isSubmitting
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text('Sign in'),
+                      selected: {_authMode},
+                      onSelectionChanged: (newSelection) {
+                        setState(() {
+                          _authMode = newSelection.first;
+                          _errorMessage = null;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Base URL field (common to both)
+                    TextFormField(
+                      controller: _baseUrlController,
+                      decoration: const InputDecoration(
+                        labelText: 'API Base URL',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Employee login form
+                    if (_authMode == AuthMode.employee) ...[
+                      Text(
+                        'Manager/Owner credentials also work here.',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 12),
+                      Form(
+                        key: _employeeFormKey,
+                        child: Column(
+                          children: [
+                            TextFormField(
+                              controller: _employeeEmailController,
+                              decoration: const InputDecoration(
+                                labelText: 'Email',
+                              ),
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Email is required';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _employeePasswordController,
+                              obscureText: true,
+                              decoration: const InputDecoration(
+                                labelText: 'Password',
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Password is required';
+                                }
+                                return null;
+                              },
+                            ),
+                          ],
                         ),
                       ),
                     ],
-                  ),
+
+                    // Customer login form
+                    if (_authMode == AuthMode.customer) ...[
+                      Text(
+                        'Enter your email address to access your repair status.',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 12),
+                      Form(
+                        key: _customerFormKey,
+                        child: TextFormField(
+                          controller: _customerEmailController,
+                          decoration: const InputDecoration(labelText: 'Email'),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Email is required';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                    ],
+
+                    // Error message
+                    if (_errorMessage != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        _errorMessage!,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.redAccent,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _isSubmitting
+                            ? null
+                            : (_authMode == AuthMode.employee
+                                  ? _submitEmployee
+                                  : _submitCustomer),
+                        child: _isSubmitting
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                _authMode == AuthMode.employee
+                                    ? 'Sign in as Employee'
+                                    : 'Sign in as Customer',
+                              ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

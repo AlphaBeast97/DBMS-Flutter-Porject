@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:techfix/models/repair_job.dart';
 import 'package:techfix/screens/login_screen.dart';
@@ -49,6 +50,204 @@ class _ManagerScreenState extends State<ManagerScreen> {
     );
   }
 
+  /// Show dialog to create a new organization
+  void _showCreateOrgDialog() {
+    final nameController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    bool isSubmitting = false;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Create Organization'),
+          content: Form(
+            key: formKey,
+            child: TextFormField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: 'Organization Name',
+                hintText: 'e.g., Tech Fix Shop A',
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Name required';
+                }
+                return null;
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isSubmitting ? null : () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: isSubmitting
+                  ? null
+                  : () async {
+                      if (!formKey.currentState!.validate()) return;
+
+                      setState(() => isSubmitting = true);
+
+                      try {
+                        final session = AppSessionScope.of(context);
+                        final api = TechFixApi(
+                          baseUrl: session.baseUrl,
+                          email: session.email,
+                          password: session.password,
+                        );
+
+                        await api.createOrganization(name: nameController.text);
+
+                        if (!mounted) return;
+                        Navigator.pop(context);
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Organization created!'),
+                          ),
+                        );
+                      } catch (error) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error: $error'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      } finally {
+                        if (mounted) {
+                          setState(() => isSubmitting = false);
+                        }
+                      }
+                    },
+              child: const Text('Create'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Show dialog to add a new employee
+  void _showAddEmployeeDialog() {
+    final nameController = TextEditingController();
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    bool isSubmitting = false;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Add Employee'),
+          content: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Name',
+                      hintText: 'e.g., John Doe',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Name required';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: emailController,
+                    decoration: const InputDecoration(
+                      labelText: 'Email',
+                      hintText: 'john@example.com',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Email required';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: passwordController,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Password',
+                      hintText: 'Temporary password',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Password required';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isSubmitting ? null : () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: isSubmitting
+                  ? null
+                  : () async {
+                      if (!formKey.currentState!.validate()) return;
+
+                      setState(() => isSubmitting = true);
+
+                      try {
+                        final session = AppSessionScope.of(context);
+                        final api = TechFixApi(
+                          baseUrl: session.baseUrl,
+                          email: session.email,
+                          password: session.password,
+                        );
+
+                        await api.createEmployee(
+                          name: nameController.text,
+                          email: emailController.text,
+                          password: passwordController.text,
+                        );
+
+                        if (!mounted) return;
+                        Navigator.pop(context);
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Employee added!')),
+                        );
+                      } catch (error) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error: $error'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      } finally {
+                        if (mounted) {
+                          setState(() => isSubmitting = false);
+                        }
+                      }
+                    },
+              child: const Text('Add'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppBackground(
@@ -71,6 +270,29 @@ class _ManagerScreenState extends State<ManagerScreen> {
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 20),
+
+          // Organization & Employee Management
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _showCreateOrgDialog,
+                  icon: const Icon(Icons.business_outlined),
+                  label: const Text('New org'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _showAddEmployeeDialog,
+                  icon: const Icon(Icons.person_add_outlined),
+                  label: const Text('Add staff'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
           SectionHeader(
             title: 'Live stats',
             actionLabel: 'Refresh',
@@ -85,43 +307,163 @@ class _ManagerScreenState extends State<ManagerScreen> {
               }
 
               if (snapshot.hasError || !snapshot.hasData) {
-                return Text(
-                  'Unable to load dashboard data.',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: Colors.redAccent),
+                final error = snapshot.error?.toString() ?? 'Unknown error';
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Unable to load dashboard data',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: Colors.redAccent),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      error,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.redAccent,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 );
               }
 
               final jobs = snapshot.data!;
+              final pending = jobs
+                  .where((job) => job.status.toLowerCase() == 'pending')
+                  .length;
+              final repairing = jobs
+                  .where((job) => job.status.toLowerCase() == 'repairing')
+                  .length;
               final ready = jobs
                   .where((job) => job.status.toLowerCase() == 'ready')
                   .length;
-              final active = jobs
-                  .where(
-                    (job) =>
-                        job.status.toLowerCase() == 'pending' ||
-                        job.status.toLowerCase() == 'repairing',
-                  )
+              final delivered = jobs
+                  .where((job) => job.status.toLowerCase() == 'delivered')
                   .length;
 
-              return Wrap(
-                spacing: 12,
-                runSpacing: 12,
+              final totalEstimated = jobs.fold<double>(
+                0,
+                (sum, job) => sum + job.estimatedCost,
+              );
+              final totalFinal = jobs.fold<double>(
+                0,
+                (sum, job) => sum + (job.finalCost ?? 0),
+              );
+
+              return Column(
                 children: [
-                  StatCard(label: 'Active jobs', value: active.toString()),
-                  StatCard(label: 'Ready for pickup', value: ready.toString()),
-                  StatCard(label: 'Total jobs', value: jobs.length.toString()),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      StatCard(label: 'Pending', value: pending.toString()),
+                      StatCard(label: 'Repairing', value: repairing.toString()),
+                      StatCard(label: 'Ready', value: ready.toString()),
+                      StatCard(label: 'Delivered', value: delivered.toString()),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+
+                  // Cost Overview
+                  const SectionHeader(title: 'Revenue overview'),
+                  const SizedBox(height: 12),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Total Estimated',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
+                                  ),
+                                  Text(
+                                    '\$${totalEstimated.toStringAsFixed(0)}',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(fontWeight: FontWeight.w600),
+                                  ),
+                                ],
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    'Total Finalized',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
+                                  ),
+                                  Text(
+                                    '\$${totalFinal.toStringAsFixed(0)}',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.green[700],
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            height: 200,
+                            child: PieChart(
+                              PieChartData(
+                                sections: [
+                                  if (pending > 0)
+                                    PieChartSectionData(
+                                      value: pending.toDouble(),
+                                      title: 'Pending\n$pending',
+                                      color: Colors.orange,
+                                      radius: 60,
+                                    ),
+                                  if (repairing > 0)
+                                    PieChartSectionData(
+                                      value: repairing.toDouble(),
+                                      title: 'Repairing\n$repairing',
+                                      color: Colors.blue,
+                                      radius: 60,
+                                    ),
+                                  if (ready > 0)
+                                    PieChartSectionData(
+                                      value: ready.toDouble(),
+                                      title: 'Ready\n$ready',
+                                      color: Colors.green,
+                                      radius: 60,
+                                    ),
+                                  if (delivered > 0)
+                                    PieChartSectionData(
+                                      value: delivered.toDouble(),
+                                      title: 'Done\n$delivered',
+                                      color: Colors.grey,
+                                      radius: 60,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               );
             },
-          ),
-          const SizedBox(height: 28),
-          const SectionHeader(title: 'Inventory usage'),
-          const SizedBox(height: 12),
-          Text(
-            'Inventory usage feeds are not available yet.',
-            style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
       ),
