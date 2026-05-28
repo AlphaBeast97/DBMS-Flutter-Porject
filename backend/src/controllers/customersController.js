@@ -91,5 +91,39 @@ export function createCustomersController({
         return next(err);
       }
     },
+    getCustomerSelf: async (req, res, next) => {
+      try {
+        const customerEmail = req.customer?.email;
+
+        if (!customerEmail) {
+          return res.status(400).json({ error: "customer email is required" });
+        }
+
+        const resultSets = await callProcedureMulti(
+          "sp_get_customer_full_for_customer",
+          [customerEmail],
+        );
+
+        const customer = resultSets[0]?.[0] || null;
+        const devices = resultSets[1] || [];
+        const repairJobs = resultSets[2] || [];
+        const inventoryUsage = resultSets[3] || [];
+
+        if (!customer) {
+          return res.status(404).json({ error: "customer not found" });
+        }
+
+        return res.status(200).json({
+          data: {
+            customer,
+            devices,
+            repair_jobs: repairJobs,
+            inventory_usage: inventoryUsage,
+          },
+        });
+      } catch (err) {
+        return next(err);
+      }
+    },
   };
 }

@@ -69,3 +69,9 @@ erDiagram
     REPAIR_JOBS ||--o{ INVENTORY_USAGE : uses
     EMPLOYEES ||--o{ INVENTORY_USAGE : logs
 ```
+
+Notes
+
+- `repair_jobs.status` values: Pending, Repairing, Ready, Delivered, Cancelled
+- `customers.email` is nullable in the database
+- `repair_jobs.final_cost` is set by trigger when status becomes Delivered

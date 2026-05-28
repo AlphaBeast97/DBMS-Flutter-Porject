@@ -122,5 +122,60 @@ export function createRepairJobsController({ callProcedure }) {
         return next(err);
       }
     },
+    updateRepairJobDescription: async (req, res, next) => {
+      try {
+        const employeeId = req.employee?.employee_id;
+        const jobId = parsePositiveInt(req.params.job_id);
+        const requestedEmployeeId = parsePositiveInt(req.body.employee_id);
+        const description = requireString(req.body.description);
+
+        if (requestedEmployeeId && requestedEmployeeId !== employeeId) {
+          return res
+            .status(403)
+            .json({ error: "employee_id does not match credentials" });
+        }
+
+        if (!jobId) {
+          return res.status(400).json({ error: "job_id is required" });
+        }
+
+        if (!description) {
+          return res.status(400).json({ error: "description is required" });
+        }
+
+        const rows = await callProcedure("sp_update_repair_job_description", [
+          employeeId,
+          jobId,
+          description,
+        ]);
+
+        return res.status(200).json({ data: rows[0] || {} });
+      } catch (err) {
+        return next(err);
+      }
+    },
+    cancelRepairJobByCustomer: async (req, res, next) => {
+      try {
+        const customerId = req.customer?.customer_id;
+        const jobId = parsePositiveInt(req.params.job_id);
+
+        if (!customerId) {
+          return res.status(400).json({ error: "customer_id is required" });
+        }
+
+        if (!jobId) {
+          return res.status(400).json({ error: "job_id is required" });
+        }
+
+        const rows = await callProcedure("sp_cancel_repair_job_by_customer", [
+          customerId,
+          jobId,
+        ]);
+
+        return res.status(200).json({ data: rows[0] || {} });
+      } catch (err) {
+        return next(err);
+      }
+    },
   };
 }

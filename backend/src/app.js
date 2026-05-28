@@ -5,7 +5,9 @@ import errorHandler from "./middleware/errorHandler.js";
 import createAuthRouter from "./routes/auth.js";
 import createCustomersRouter from "./routes/customers.js";
 import createDevicesRouter from "./routes/devices.js";
+import createEmployeesRouter from "./routes/employees.js";
 import createInventoryUsageRouter from "./routes/inventoryUsage.js";
+import createOrganizationsRouter from "./routes/organizations.js";
 import createRepairJobsRouter from "./routes/repairJobs.js";
 
 export function createApp({
@@ -26,6 +28,8 @@ export function createApp({
   });
 
   app.use("/api/auth", createAuthRouter(procedures));
+  app.use("/api/organizations", createOrganizationsRouter(procedures));
+  app.use("/api/employees", createEmployeesRouter(procedures));
   app.use("/api/customers", createCustomersRouter(procedures));
   app.use("/api/devices", createDevicesRouter(procedures));
   app.use("/api/repair-jobs", createRepairJobsRouter(procedures));

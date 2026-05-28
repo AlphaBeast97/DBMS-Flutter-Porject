@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:techfix/config/api_config.dart';
-import 'package:techfix/screens/home_shell.dart';
 import 'package:techfix/screens/login_screen.dart';
 import 'package:techfix/state/app_session.dart';
 import 'package:techfix/state/app_session_scope.dart';
@@ -28,10 +27,13 @@ class _TechFixAppState extends State<TechFixApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'TechFix',
-      theme: AppTheme.lightTheme,
-      home: AppSessionScope(session: _session, child: const LoginScreen()),
+    return AppSessionScope(
+      session: _session,
+      child: MaterialApp(
+        title: 'TechFix',
+        theme: AppTheme.lightTheme,
+        home: const LoginScreen(),
+      ),
     );
   }
 }

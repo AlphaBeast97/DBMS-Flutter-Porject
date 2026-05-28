@@ -5,6 +5,8 @@ import { createApp } from "../src/app.js";
 
 const authHeader =
   "Basic " + Buffer.from("tech@example.com:pass").toString("base64");
+const customerAuthHeader =
+  "Basic " + Buffer.from("ayesha@example.com:").toString("base64");
 
 function createMockCallProcedure(rows) {
   return async (name) => {
@@ -16,6 +18,17 @@ function createMockCallProcedure(rows) {
           name: "Test",
           email: "tech@example.com",
           role: "Employee",
+        },
+      ];
+    }
+
+    if (name === "sp_customer_login") {
+      return [
+        {
+          customer_id: 1,
+          organization_id: 1,
+          name: "Ayesha Malik",
+          email: "ayesha@example.com",
         },
       ];
     }
@@ -75,4 +88,23 @@ test("GET /api/customers/:id returns grouped data", async () => {
   assert.equal(response.body.data.devices.length, 1);
   assert.equal(response.body.data.repair_jobs.length, 1);
   assert.equal(response.body.data.inventory_usage.length, 1);
+});
+
+test("GET /api/customers/me returns customer data", async () => {
+  const app = createApp({
+    callProcedureMulti: async () => [
+      [{ customer_id: 1, name: "Ayesha Malik" }],
+      [{ device_id: 10 }],
+      [{ job_id: 20 }],
+      [{ usage_id: 30 }],
+    ],
+    callProcedure: createMockCallProcedure([]),
+  });
+
+  const response = await request(app)
+    .get("/api/customers/me")
+    .set("Authorization", customerAuthHeader);
+
+  assert.equal(response.status, 200);
+  assert.equal(response.body.data.customer.customer_id, 1);
 });
