@@ -78,6 +78,70 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
     });
   }
 
+  /// Show repairs for a specific device
+  void _showDeviceRepairs(
+    Map<String, dynamic> device,
+    List<RepairJob> jobs,
+    Map<int, String> deviceLabelById,
+    String customerName,
+  ) {
+    final deviceId = device['device_id'] as int;
+    final deviceLabel = _deviceLabel(device);
+    final deviceJobs = jobs.where((job) => job.deviceId == deviceId).toList();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Device Repairs'),
+            const SizedBox(height: 4),
+            Text(
+              deviceLabel,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (deviceJobs.isEmpty)
+                Text(
+                  'No repairs for this device.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                )
+              else
+                ...deviceJobs.map(
+                  (job) => JobCard(
+                    job: job,
+                    customerNameOverride: customerName,
+                    deviceLabelOverride: deviceLabel,
+                    onCancel: job.status.toLowerCase() == 'pending'
+                        ? () {
+                            Navigator.pop(context);
+                            _cancelJob(job.id);
+                          }
+                        : null,
+                  ),
+                ),
+            ],
+          ),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _cancelJob(int jobId) async {
     final session = AppSessionScope.of(context);
 
@@ -132,6 +196,115 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
     final type = _asText(device['type'], fallback: 'Device');
     final parts = [brand, model].where((part) => part.isNotEmpty).toList();
     return parts.isNotEmpty ? parts.join(' ') : type;
+  }
+
+  /// Format date to user-friendly format (e.g., "May 15, 2026")
+  String _formatDate(dynamic dateValue) {
+    if (dateValue == null) return '—';
+    try {
+      final datetime = DateTime.parse(dateValue.toString());
+      final months = [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December',
+      ];
+      return '${months[datetime.month - 1]} ${datetime.day}, ${datetime.year}';
+    } catch (_) {
+      return dateValue.toString();
+    }
+  }
+
+  /// Show profile dialog
+  void _showProfileDialog(Map<String, dynamic> customer) {
+    final customerName = _asText(customer['name'], fallback: 'Customer');
+    final customerPhone = _asText(customer['phone']);
+    final customerEmail = _asText(customer['email']);
+    final joined = _formatDate(customer['created_at']);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('My Profile'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Customer name header
+              Center(
+                child: Column(
+                  children: [
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundColor: Colors.blue[200],
+                      child: Text(
+                        customerName[0].toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      customerName,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Contact info
+              _profileField('Email', customerEmail),
+              const SizedBox(height: 16),
+              _profileField('Phone', customerPhone),
+              const SizedBox(height: 16),
+              _profileField('Customer ID', _asText(customer['customer_id'])),
+              const SizedBox(height: 16),
+              _profileField('Member Since', joined),
+            ],
+          ),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build a profile field with label and value
+  Widget _profileField(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(value, style: const TextStyle(fontSize: 16)),
+      ],
+    );
   }
 
   void _signOut() {
@@ -258,14 +431,12 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
                     [];
                 final deviceLabelById = {
                   for (final device in devices)
-                    device['device_id']: _deviceLabel(device),
+                    (device['device_id'] as int): _deviceLabel(device),
                 };
                 final customerName = _asText(
                   customer['name'],
                   fallback: 'Customer',
                 );
-                final customerPhone = _asText(customer['phone']);
-                final customerEmail = _asText(customer['email']);
                 final activeJobs = jobs
                     .where(
                       (job) =>
@@ -298,39 +469,20 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
                       ],
                     ),
                     const SizedBox(height: 24),
-                    const SectionHeader(title: 'Customer details'),
-                    const SizedBox(height: 12),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              customerName,
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w600),
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              'Customer ID: ${_asText(customer['customer_id'])}',
-                            ),
-                            const SizedBox(height: 4),
-                            Text('Phone: $customerPhone'),
-                            const SizedBox(height: 4),
-                            Text('Email: $customerEmail'),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Organization: ${_asText(customer['organization_id'])}',
-                            ),
-                            const SizedBox(height: 4),
-                            Text('Joined: ${_asText(customer['created_at'])}'),
-                          ],
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const SectionHeader(title: 'My Account'),
+                        ElevatedButton.icon(
+                          onPressed: () => _showProfileDialog(customer),
+                          icon: const Icon(Icons.person_outline),
+                          label: const Text('View Profile'),
                         ),
-                      ),
+                      ],
                     ),
+                    const SizedBox(height: 12),
                     const SizedBox(height: 24),
-                    const SectionHeader(title: 'Devices'),
+                    const SectionHeader(title: 'My Devices'),
                     const SizedBox(height: 12),
                     if (devices.isEmpty)
                       Text(
@@ -338,32 +490,23 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
                         style: Theme.of(context).textTheme.bodySmall,
                       )
                     else
-                      ...devices.map(
-                        (device) => Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _deviceLabel(device),
-                                  style: Theme.of(context).textTheme.titleMedium
-                                      ?.copyWith(fontWeight: FontWeight.w600),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: devices
+                            .map(
+                              (device) => ActionChip(
+                                label: Text(_deviceLabel(device)),
+                                avatar: const Icon(Icons.devices_outlined),
+                                onPressed: () => _showDeviceRepairs(
+                                  device,
+                                  jobs,
+                                  deviceLabelById,
+                                  customerName,
                                 ),
-                                const SizedBox(height: 8),
-                                Text('Type: ${_asText(device['type'])}'),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Serial: ${_asText(device['serial_number'])}',
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Device ID: ${_asText(device['device_id'])}',
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                              ),
+                            )
+                            .toList(),
                       ),
                     const SizedBox(height: 28),
                     const SectionHeader(title: 'Latest updates'),
