@@ -6,6 +6,7 @@ import 'package:techfix/state/app_session_scope.dart';
 import 'package:techfix/widgets/app_background.dart';
 import 'package:techfix/widgets/job_card.dart';
 import 'package:techfix/widgets/section_header.dart';
+import 'package:techfix/widgets/stat_card.dart';
 
 class TechnicianScreen extends StatefulWidget {
   const TechnicianScreen({super.key});
@@ -46,6 +47,138 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
       (_) => false,
+    );
+  }
+
+  /// Format text to readable display format
+  String _asText(dynamic value, {String fallback = '—'}) {
+    if (value == null) return fallback;
+    final str = value.toString().trim();
+    return str.isNotEmpty ? str : fallback;
+  }
+
+  /// Show employee profile dialog
+  void _showProfileDialog(Map<String, dynamic> employee) {
+    final name = _asText(employee['name'], fallback: 'Employee');
+    final employeeId = _asText(employee['employee_id']);
+    final email = _asText(employee['email']);
+    final role = _asText(employee['role']);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('My Profile'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Column(
+                  children: [
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundColor: Colors.blue[200],
+                      child: Text(
+                        name[0].toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      name,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              _profileField('Employee ID', employeeId),
+              const SizedBox(height: 16),
+              _profileField('Email', email),
+              const SizedBox(height: 16),
+              _profileField('Role', role),
+            ],
+          ),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build a profile field with label and value
+  Widget _profileField(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(value, style: const TextStyle(fontSize: 16)),
+      ],
+    );
+  }
+
+  /// Show statistics dialog
+  void _showStatisticsDialog(List<RepairJob> jobs) {
+    final total = jobs.length;
+    final pending = jobs
+        .where((j) => j.status.toLowerCase() == 'pending')
+        .length;
+    final repairing = jobs
+        .where((j) => j.status.toLowerCase() == 'repairing')
+        .length;
+    final ready = jobs.where((j) => j.status.toLowerCase() == 'ready').length;
+    final delivered = jobs
+        .where((j) => j.status.toLowerCase() == 'delivered')
+        .length;
+    final cancelled = jobs
+        .where((j) => j.status.toLowerCase() == 'cancelled')
+        .length;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Your Statistics'),
+        content: SingleChildScrollView(
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              StatCard(label: 'Total jobs', value: total.toString()),
+              StatCard(label: 'Pending', value: pending.toString()),
+              StatCard(label: 'Repairing', value: repairing.toString()),
+              StatCard(label: 'Ready', value: ready.toString()),
+              StatCard(label: 'Delivered', value: delivered.toString()),
+              StatCard(label: 'Cancelled', value: cancelled.toString()),
+            ],
+          ),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -431,6 +564,24 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
           ),
           const SizedBox(height: 20),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const SectionHeader(title: 'My Account'),
+              Builder(
+                builder: (context) {
+                  final session = AppSessionScope.of(context);
+                  final employee = session.employee ?? {};
+                  return ElevatedButton.icon(
+                    onPressed: () => _showProfileDialog(employee),
+                    icon: const Icon(Icons.person_outline),
+                    label: const Text('View Profile'),
+                  );
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Row(
             children: [
               Expanded(
                 child: ElevatedButton.icon(
@@ -446,6 +597,26 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
                   icon: const Icon(Icons.inventory_2_outlined),
                   label: const Text('Log part'),
                 ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const SectionHeader(title: 'Your Statistics'),
+              FutureBuilder<List<RepairJob>>(
+                future: _jobsFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return ElevatedButton.icon(
+                      onPressed: () => _showStatisticsDialog(snapshot.data!),
+                      icon: const Icon(Icons.bar_chart_outlined),
+                      label: const Text('View'),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
               ),
             ],
           ),
