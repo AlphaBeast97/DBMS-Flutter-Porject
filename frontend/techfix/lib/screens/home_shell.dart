@@ -76,9 +76,9 @@ class _HomeShellState extends State<HomeShell> {
               index: currentIndex,
               children: visibleTabs.map((item) => item.screen).toList(),
             ),
-      bottomNavigationBar: visibleTabs.isEmpty
-          ? null
-          : NavigationBar(
+      // Only show NavigationBar if there are 2+ tabs (Material Design requirement)
+      bottomNavigationBar: visibleTabs.length >= 2
+          ? NavigationBar(
               selectedIndex: currentIndex,
               onDestinationSelected: (value) {
                 setState(() {
@@ -93,7 +93,8 @@ class _HomeShellState extends State<HomeShell> {
                     ),
                   )
                   .toList(),
-            ),
+            )
+          : null,
     );
   }
 }

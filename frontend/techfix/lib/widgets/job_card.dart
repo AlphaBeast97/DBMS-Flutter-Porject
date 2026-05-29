@@ -5,12 +5,22 @@ import 'package:techfix/theme/app_theme.dart';
 class JobCard extends StatelessWidget {
   final RepairJob job;
   final VoidCallback? onTap;
+  final String? customerNameOverride;
+  final String? deviceLabelOverride;
 
-  const JobCard({super.key, required this.job, this.onTap});
+  const JobCard({
+    super.key,
+    required this.job,
+    this.onTap,
+    this.customerNameOverride,
+    this.deviceLabelOverride,
+  });
 
   @override
   Widget build(BuildContext context) {
     final statusColor = AppTheme.statusColor(job.status);
+    final deviceLabel = deviceLabelOverride ?? job.deviceLabel;
+    final customerName = customerNameOverride ?? job.customerName;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: GestureDetector(
@@ -26,7 +36,7 @@ class JobCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        job.deviceLabel,
+                        deviceLabel,
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.w600),
                       ),
@@ -52,7 +62,7 @@ class JobCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Customer: ${job.customerName}',
+                  'Customer: $customerName',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 12),

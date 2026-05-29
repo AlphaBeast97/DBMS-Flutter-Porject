@@ -1,5 +1,6 @@
 class RepairJob {
   final int id;
+  final int deviceId;
   final String deviceLabel;
   final String customerName;
   final String status;
@@ -9,6 +10,7 @@ class RepairJob {
 
   const RepairJob({
     required this.id,
+    required this.deviceId,
     required this.deviceLabel,
     required this.customerName,
     required this.status,
@@ -40,6 +42,7 @@ class RepairJob {
 
     return RepairJob(
       id: (json['job_id'] ?? json['id'] ?? 0) as int,
+      deviceId: (json['device_id'] ?? 0) as int,
       deviceLabel: label,
       customerName: customerName.isNotEmpty ? customerName : 'Customer',
       status: (json['status'] ?? 'Pending').toString(),

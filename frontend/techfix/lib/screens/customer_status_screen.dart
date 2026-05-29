@@ -20,16 +20,22 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
   Future<Map<String, dynamic>>? _customerFuture;
   String? _errorMessage;
   bool _isCustomerRole = false;
+  bool _initializedSessionData = false;
 
   @override
   void initState() {
     super.initState();
-    // Check if logged-in user is a customer; if so, auto-load their data
-    _checkAndLoadCustomerData();
   }
 
-  /// Check if user is a customer and auto-load their data
-  void _checkAndLoadCustomerData() {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (_initializedSessionData) {
+      return;
+    }
+    _initializedSessionData = true;
+
     final session = AppSessionScope.of(context);
     final employee = session.employee;
 
@@ -70,6 +76,19 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
         password: session.password,
       ).getCustomerDetail(id);
     });
+  }
+
+  String _asText(dynamic value, {String fallback = '—'}) {
+    final text = value?.toString().trim() ?? '';
+    return text.isEmpty ? fallback : text;
+  }
+
+  String _deviceLabel(Map<String, dynamic> device) {
+    final brand = _asText(device['brand'], fallback: '');
+    final model = _asText(device['model'], fallback: '');
+    final type = _asText(device['type'], fallback: 'Device');
+    final parts = [brand, model].where((part) => part.isNotEmpty).toList();
+    return parts.isNotEmpty ? parts.join(' ') : type;
   }
 
   void _signOut() {
@@ -182,12 +201,28 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
                 }
 
                 final data = snapshot.data!;
+                final customer =
+                    (data['customer'] as Map<String, dynamic>?) ?? data;
+                final devices =
+                    (data['devices'] as List<dynamic>?)
+                        ?.cast<Map<String, dynamic>>() ??
+                    [];
                 final jobs =
                     (data['repair_jobs'] as List<dynamic>?)
                         ?.cast<Map<String, dynamic>>()
                         .map(RepairJob.fromApi)
                         .toList() ??
                     [];
+                final deviceLabelById = {
+                  for (final device in devices)
+                    device['device_id']: _deviceLabel(device),
+                };
+                final customerName = _asText(
+                  customer['name'],
+                  fallback: 'Customer',
+                );
+                final customerPhone = _asText(customer['phone']);
+                final customerEmail = _asText(customer['email']);
                 final activeJobs = jobs
                     .where(
                       (job) =>
@@ -219,6 +254,74 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
                         const StatCard(label: 'Average ETA', value: '—'),
                       ],
                     ),
+                    const SizedBox(height: 24),
+                    const SectionHeader(title: 'Customer details'),
+                    const SizedBox(height: 12),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              customerName,
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              'Customer ID: ${_asText(customer['customer_id'])}',
+                            ),
+                            const SizedBox(height: 4),
+                            Text('Phone: $customerPhone'),
+                            const SizedBox(height: 4),
+                            Text('Email: $customerEmail'),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Organization: ${_asText(customer['organization_id'])}',
+                            ),
+                            const SizedBox(height: 4),
+                            Text('Joined: ${_asText(customer['created_at'])}'),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const SectionHeader(title: 'Devices'),
+                    const SizedBox(height: 12),
+                    if (devices.isEmpty)
+                      Text(
+                        'No devices found for this customer.',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      )
+                    else
+                      ...devices.map(
+                        (device) => Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _deviceLabel(device),
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.w600),
+                                ),
+                                const SizedBox(height: 8),
+                                Text('Type: ${_asText(device['type'])}'),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Serial: ${_asText(device['serial_number'])}',
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Device ID: ${_asText(device['device_id'])}',
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 28),
                     const SectionHeader(title: 'Latest updates'),
                     const SizedBox(height: 12),
@@ -228,7 +331,14 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
                         style: Theme.of(context).textTheme.bodySmall,
                       )
                     else
-                      ...jobs.map((job) => JobCard(job: job)),
+                      ...jobs.map(
+                        (job) => JobCard(
+                          job: job,
+                          customerNameOverride: customerName,
+                          deviceLabelOverride:
+                              deviceLabelById[job.deviceId] ?? job.deviceLabel,
+                        ),
+                      ),
                   ],
                 );
               },
