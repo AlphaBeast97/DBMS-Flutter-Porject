@@ -4,6 +4,7 @@ class RepairJob {
   final String deviceLabel;
   final String customerName;
   final String status;
+  final String description;
   final DateTime createdAt;
   final double estimatedCost;
   final double? finalCost;
@@ -14,6 +15,7 @@ class RepairJob {
     required this.deviceLabel,
     required this.customerName,
     required this.status,
+    required this.description,
     required this.createdAt,
     required this.estimatedCost,
     this.finalCost,
@@ -46,6 +48,7 @@ class RepairJob {
       deviceLabel: label,
       customerName: customerName.isNotEmpty ? customerName : 'Customer',
       status: (json['status'] ?? 'Pending').toString(),
+      description: (json['description'] ?? '').toString(),
       createdAt:
           DateTime.tryParse((json['created_at'] ?? '').toString()) ??
           DateTime.now(),

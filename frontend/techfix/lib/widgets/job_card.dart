@@ -67,6 +67,14 @@ class JobCard extends StatelessWidget {
                   'Customer: $customerName',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
+                const SizedBox(height: 8),
+                if (job.description.isNotEmpty)
+                  Text(
+                    job.description,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,

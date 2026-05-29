@@ -451,6 +451,18 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const SectionHeader(title: 'My Account'),
+                        ElevatedButton.icon(
+                          onPressed: () => _showProfileDialog(customer),
+                          icon: const Icon(Icons.person_outline),
+                          label: const Text('View Profile'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
                     const SectionHeader(title: 'Snapshot'),
                     const SizedBox(height: 12),
                     Wrap(
@@ -468,19 +480,6 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
                         const StatCard(label: 'Average ETA', value: '—'),
                       ],
                     ),
-                    const SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const SectionHeader(title: 'My Account'),
-                        ElevatedButton.icon(
-                          onPressed: () => _showProfileDialog(customer),
-                          icon: const Icon(Icons.person_outline),
-                          label: const Text('View Profile'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
                     const SizedBox(height: 24),
                     const SectionHeader(title: 'My Devices'),
                     const SizedBox(height: 12),
@@ -507,26 +506,6 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
                               ),
                             )
                             .toList(),
-                      ),
-                    const SizedBox(height: 28),
-                    const SectionHeader(title: 'Latest updates'),
-                    const SizedBox(height: 12),
-                    if (jobs.isEmpty)
-                      Text(
-                        'No repair jobs found for this customer.',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      )
-                    else
-                      ...jobs.map(
-                        (job) => JobCard(
-                          job: job,
-                          customerNameOverride: customerName,
-                          deviceLabelOverride:
-                              deviceLabelById[job.deviceId] ?? job.deviceLabel,
-                          onCancel: job.status.toLowerCase() == 'pending'
-                              ? () => _cancelJob(job.id)
-                              : null,
-                        ),
                       ),
                   ],
                 );
