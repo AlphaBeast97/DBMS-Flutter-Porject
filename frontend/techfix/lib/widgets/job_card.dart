@@ -7,6 +7,7 @@ class JobCard extends StatelessWidget {
   final VoidCallback? onTap;
   final String? customerNameOverride;
   final String? deviceLabelOverride;
+  final VoidCallback? onCancel;
 
   const JobCard({
     super.key,
@@ -14,6 +15,7 @@ class JobCard extends StatelessWidget {
     this.onTap,
     this.customerNameOverride,
     this.deviceLabelOverride,
+    this.onCancel,
   });
 
   @override
@@ -90,6 +92,17 @@ class JobCard extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Colors.grey[600],
                       fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+                if (onCancel != null) ...[
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: OutlinedButton.icon(
+                      onPressed: onCancel,
+                      icon: const Icon(Icons.cancel_outlined),
+                      label: const Text('Cancel job'),
                     ),
                   ),
                 ],

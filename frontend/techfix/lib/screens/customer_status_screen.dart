@@ -78,6 +78,49 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
     });
   }
 
+  Future<void> _cancelJob(int jobId) async {
+    final session = AppSessionScope.of(context);
+
+    try {
+      await TechFixApi(
+        baseUrl: session.baseUrl,
+        email: session.email,
+        password: session.password,
+      ).cancelRepairJob(jobId);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Job cancelled successfully.')),
+      );
+
+      setState(() {
+        if (_isCustomerRole) {
+          _customerFuture = TechFixApi(
+            baseUrl: session.baseUrl,
+            email: session.email,
+            password: session.password,
+          ).getCustomerMe();
+        } else if (_customerIdController.text.trim().isNotEmpty) {
+          _customerFuture = TechFixApi(
+            baseUrl: session.baseUrl,
+            email: session.email,
+            password: session.password,
+          ).getCustomerDetail(int.parse(_customerIdController.text.trim()));
+        }
+      });
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Cancel failed: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   String _asText(dynamic value, {String fallback = '—'}) {
     final text = value?.toString().trim() ?? '';
     return text.isEmpty ? fallback : text;
@@ -337,6 +380,9 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
                           customerNameOverride: customerName,
                           deviceLabelOverride:
                               deviceLabelById[job.deviceId] ?? job.deviceLabel,
+                          onCancel: job.status.toLowerCase() == 'pending'
+                              ? () => _cancelJob(job.id)
+                              : null,
                         ),
                       ),
                   ],
