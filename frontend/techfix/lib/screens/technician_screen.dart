@@ -139,18 +139,26 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
 
   /// Show statistics dialog
   void _showStatisticsDialog(List<RepairJob> jobs) {
-    final total = jobs.length;
-    final pending = jobs
+    final session = AppSessionScope.of(context);
+    final currentEmployeeId = session.employee?['employee_id'] as int?;
+
+    // Filter jobs to only those created by this employee
+    final myJobs = currentEmployeeId != null
+        ? jobs.where((j) => j.createdByEmployeeId == currentEmployeeId).toList()
+        : jobs;
+
+    final total = myJobs.length;
+    final pending = myJobs
         .where((j) => j.status.toLowerCase() == 'pending')
         .length;
-    final repairing = jobs
+    final repairing = myJobs
         .where((j) => j.status.toLowerCase() == 'repairing')
         .length;
-    final ready = jobs.where((j) => j.status.toLowerCase() == 'ready').length;
-    final delivered = jobs
+    final ready = myJobs.where((j) => j.status.toLowerCase() == 'ready').length;
+    final delivered = myJobs
         .where((j) => j.status.toLowerCase() == 'delivered')
         .length;
-    final cancelled = jobs
+    final cancelled = myJobs
         .where((j) => j.status.toLowerCase() == 'cancelled')
         .length;
 
