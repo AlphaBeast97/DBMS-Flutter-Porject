@@ -11,10 +11,11 @@ function buildPlaceholders(count) {
 export async function callProcedure(name, params = []) {
   const placeholders = buildPlaceholders(params.length);
   const sql = `CALL ${name}(${placeholders})`;
-  const [resultSets] = await pool.execute(sql, params);
+  const [resultSets] = await pool.query(sql, params);
 
   if (Array.isArray(resultSets)) {
-    return resultSets[0] || [];
+    const rows = resultSets.filter((set) => Array.isArray(set));
+    return rows.length > 0 ? rows[rows.length - 1] : [];
   }
 
   return resultSets || [];
@@ -31,7 +32,7 @@ function normalizeResultSets(resultSets) {
 export async function callProcedureMulti(name, params = []) {
   const placeholders = buildPlaceholders(params.length);
   const sql = `CALL ${name}(${placeholders})`;
-  const [resultSets] = await pool.execute(sql, params);
+  const [resultSets] = await pool.query(sql, params);
 
   return normalizeResultSets(resultSets);
 }

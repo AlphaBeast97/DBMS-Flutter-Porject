@@ -175,6 +175,8 @@ CREATE PROCEDURE sp_create_customer(
     IN p_email VARCHAR(100)
 )
 BEGIN
+    DECLARE v_existing_id INT DEFAULT NULL;
+
     -- Validate required inputs
     IF p_org_id IS NULL THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Organization ID is required.';
@@ -195,11 +197,23 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Phone is required.';
     END IF;
 
-    -- Insert customer
-    INSERT INTO customers (organization_id, created_by_employee_id, name, phone, email)
-    VALUES (p_org_id, p_employee_id, p_name, p_phone, NULLIF(p_email, ''));
+    -- If email provided, check for existing customer in the same org
+    IF p_email IS NOT NULL AND p_email != '' THEN
+        SELECT customer_id INTO v_existing_id
+        FROM customers
+        WHERE email = p_email COLLATE utf8mb4_unicode_ci AND organization_id = p_org_id
+        LIMIT 1;
+    END IF;
 
-    SELECT LAST_INSERT_ID() AS customer_id;
+    -- Return existing customer_id if found, otherwise create new
+    IF v_existing_id IS NOT NULL THEN
+        SELECT v_existing_id AS customer_id;
+    ELSE
+        INSERT INTO customers (organization_id, created_by_employee_id, name, phone, email)
+        VALUES (p_org_id, p_employee_id, p_name, p_phone, NULLIF(p_email, ''));
+
+        SELECT LAST_INSERT_ID() AS customer_id;
+    END IF;
 END$$
 DELIMITER ;
 

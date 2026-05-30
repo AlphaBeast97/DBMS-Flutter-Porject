@@ -312,11 +312,10 @@ class _EditDescDialogState extends State<EditDescDialog> {
 // Device type chips
 // ─────────────────────────────────────────────────────────────
 const _deviceTypes = [
-  ('Phone', Icons.smartphone),
   ('Laptop', Icons.laptop_mac),
+  ('Mobile', Icons.smartphone),
+  ('Console', Icons.videogame_asset),
   ('Tablet', Icons.tablet_mac),
-  ('Watch', Icons.watch),
-  ('Audio', Icons.headphones),
   ('Other', Icons.devices_other),
 ];
 
@@ -341,7 +340,7 @@ class _CreateJobSheetState extends State<CreateJobSheet> {
   int _step = 0;
   final _f = <String, String>{
     'cEmail': '', 'cName': '', 'cPhone': '',
-    'dType': 'Phone', 'dIcon': 'smartphone',
+    'dType': 'Mobile', 'dIcon': 'smartphone',
     'brand': '', 'model': '', 'serial': '',
     'desc': '', 'cost': '',
   };
@@ -521,7 +520,7 @@ class _CreateJobSheetState extends State<CreateJobSheet> {
         return GestureDetector(
           onTap: () => setState(() {
             _f['dType'] = d.$1;
-            final iconMap = {'Phone': 'smartphone', 'Laptop': 'laptop_mac', 'Tablet': 'tablet_mac', 'Watch': 'watch', 'Audio': 'headphones', 'Other': 'devices_other'};
+            final iconMap = {'Laptop': 'laptop_mac', 'Mobile': 'smartphone', 'Console': 'videogame_asset', 'Tablet': 'tablet_mac', 'Other': 'devices_other'};
             _f['dIcon'] = iconMap[d.$1] ?? 'devices_other';
           }),
           child: Container(
