@@ -33,13 +33,7 @@ export function createRepairJobsController({ callProcedure }) {
           return res.status(400).json({ error: "status is invalid" });
         }
 
-        // Build parameters based on what's provided
-        const params = [employeeId, status || null];
-
-        // If organization_id is provided, pass it as 3rd param
-        if (organizationId) {
-          params.push(organizationId);
-        }
+        const params = [employeeId, status || null, organizationId || null];
 
         const rows = await callProcedure("sp_get_repair_jobs", params);
 
@@ -113,14 +107,15 @@ export function createRepairJobsController({ callProcedure }) {
           return res.status(400).json({ error: "status is required" });
         }
 
-        if (!WRITE_STATUSES.has(status)) {
+        const normalized = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+        if (!WRITE_STATUSES.has(normalized)) {
           return res.status(400).json({ error: "status is invalid" });
         }
 
         const rows = await callProcedure("sp_update_repair_job_status", [
           employeeId,
           jobId,
-          status,
+          normalized,
         ]);
 
         return res.status(200).json({ data: rows[0] || {} });

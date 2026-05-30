@@ -606,10 +606,12 @@ BEGIN
         u.job_id,
         u.part_name,
         u.part_cost,
-        u.created_at
+        u.created_at,
+        e.name AS employee_name
     FROM inventory_usage u
     JOIN repair_jobs r ON r.job_id = u.job_id
     JOIN devices d ON d.device_id = r.device_id
+    LEFT JOIN employees e ON e.employee_id = u.logged_by_employee_id
     WHERE d.customer_id = p_customer_id;
 END$$
 DELIMITER ;
@@ -676,10 +678,12 @@ BEGIN
         u.job_id,
         u.part_name,
         u.part_cost,
-        u.created_at
+        u.created_at,
+        e.name AS employee_name
     FROM inventory_usage u
     JOIN repair_jobs r ON r.job_id = u.job_id
     JOIN devices d ON d.device_id = r.device_id
+    LEFT JOIN employees e ON e.employee_id = u.logged_by_employee_id
     WHERE d.customer_id = v_customer_id;
 END$$
 DELIMITER ;

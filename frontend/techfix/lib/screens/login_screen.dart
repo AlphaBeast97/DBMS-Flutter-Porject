@@ -4,10 +4,42 @@ import 'package:techfix/config/api_config.dart';
 import 'package:techfix/screens/home_shell.dart';
 import 'package:techfix/services/techfix_api.dart';
 import 'package:techfix/state/app_session_scope.dart';
+import 'package:techfix/theme/app_theme.dart';
 import 'package:techfix/widgets/app_background.dart';
+import 'package:techfix/widgets/field.dart';
 
 enum AuthMode { owner, employee, customer }
 enum OwnerMode { signIn, signUp }
+
+class Brandmark extends StatelessWidget {
+  final double size;
+
+  const Brandmark({super.key, this.size = 56});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: const LinearGradient(
+          begin: Alignment(-1, -1),
+          end: Alignment(1, 1),
+          colors: [AppTheme.coral, Color(0xFFE0553A)],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.coral.withOpacity(0.32),
+            blurRadius: 22,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: const Icon(Icons.handyman, size: 28, color: Colors.white),
+    );
+  }
+}
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -199,228 +231,516 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _submit() {
+    switch (_authMode) {
+      case AuthMode.owner:
+        if (_ownerMode == OwnerMode.signIn) {
+          _submitOwnerSignIn();
+        } else {
+          _submitOwnerSignUp();
+        }
+      case AuthMode.employee:
+        _submitEmployee();
+      case AuthMode.customer:
+        _submitCustomer();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return AppBackground(
-      child: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 32, 24, 40),
+    final roleMeta = switch (_authMode) {
+      AuthMode.owner => (
+        icon: Icons.admin_panel_settings,
+        tint: AppTheme.coral,
+        blurb: 'Full org access — manage staff, revenue & all jobs.',
+      ),
+      AuthMode.employee => (
+        icon: Icons.engineering,
+        tint: AppTheme.teal,
+        blurb: 'Technician console — your jobs and parts logging.',
+      ),
+      AuthMode.customer => (
+        icon: Icons.person,
+        tint: AppTheme.sky,
+        blurb: 'Track your repairs and pick-up status.',
+      ),
+    };
+
+    final cta = _authMode == AuthMode.owner && _ownerMode == OwnerMode.signUp
+        ? 'Create workshop'
+        : 'Sign in';
+    final busyIcon = _isSubmitting
+        ? null
+        : (_authMode == AuthMode.owner && _ownerMode == OwnerMode.signUp
+            ? Icons.rocket_launch
+            : Icons.login);
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      resizeToAvoidBottomInset: true,
+      body: AppBackground(
+        child: Center(
+          child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(22, 46, 22, 40),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Brand header
+                Column(
                   children: [
-                    Text(
+                    const Brandmark(),
+                    const SizedBox(height: 16),
+                    const Text(
                       'TechFix',
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                      style: TextStyle(
+                        
+                        fontSize: 30,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.ink,
+                        letterSpacing: -0.6,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      'Repair Workflow Manager',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey[600],
+                    const Text(
+                      'Repair workflow, handled.',
+                      style: TextStyle(
+                        
+                        fontSize: 14.5,
+                        color: AppTheme.muted,
                       ),
                     ),
-                    const SizedBox(height: 20),
+                  ],
+                ),
+                const SizedBox(height: 28),
 
-                    // Auth mode selector — 3 tabs
-                    SegmentedButton<AuthMode>(
-                      segments: const [
-                        ButtonSegment(value: AuthMode.owner, label: Text('Owner')),
-                        ButtonSegment(value: AuthMode.employee, label: Text('Employee')),
-                        ButtonSegment(value: AuthMode.customer, label: Text('Customer')),
-                      ],
-                      selected: {_authMode},
-                      onSelectionChanged: (s) => _switchAuthMode(s.first),
-                    ),
-                    const SizedBox(height: 20),
+                // Role segmented control
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(100),
+                    border: Border.all(color: AppTheme.line2),
+                  ),
+                  child: Row(
+                    children: [
+                      _SegOption(
+                        icon: Icons.admin_panel_settings,
+                        label: 'Owner',
+                        selected: _authMode == AuthMode.owner,
+                        tint: AppTheme.coral,
+                        onTap: () => _switchAuthMode(AuthMode.owner),
+                      ),
+                      _SegOption(
+                        icon: Icons.engineering,
+                        label: 'Employee',
+                        selected: _authMode == AuthMode.employee,
+                        tint: AppTheme.teal,
+                        onTap: () => _switchAuthMode(AuthMode.employee),
+                      ),
+                      _SegOption(
+                        icon: Icons.person,
+                        label: 'Customer',
+                        selected: _authMode == AuthMode.customer,
+                        tint: AppTheme.sky,
+                        onTap: () => _switchAuthMode(AuthMode.customer),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
 
-                    // Base URL field (common to all)
-                    TextFormField(
-                      controller: _baseUrlController,
-                      decoration: const InputDecoration(labelText: 'API Base URL'),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // ========== OWNER TAB ==========
-                    if (_authMode == AuthMode.owner) ...[
+                // Card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppTheme.line),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Role blurb
                       Row(
                         children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: roleMeta.tint.withOpacity(0.14),
+                              borderRadius: BorderRadius.circular(13),
+                            ),
+                            child: Icon(roleMeta.icon, size: 23, color: roleMeta.tint),
+                          ),
+                          const SizedBox(width: 11),
                           Expanded(
-                            child: SegmentedButton<OwnerMode>(
-                              segments: const [
-                                ButtonSegment(value: OwnerMode.signIn, label: Text('Sign In')),
-                                ButtonSegment(value: OwnerMode.signUp, label: Text('Sign Up')),
-                              ],
-                              selected: {_ownerMode},
-                              onSelectionChanged: (s) => _switchOwnerMode(s.first),
+                            child: Text(
+                              roleMeta.blurb,
+                              style: const TextStyle(
+                                
+                                fontSize: 13,
+                                color: AppTheme.muted,
+                                height: 1.4,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 18),
 
-                      if (_ownerMode == OwnerMode.signIn) ...[
+                      // Owner sign in / sign up toggle
+                      if (_authMode == AuthMode.owner) ...[
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: AppTheme.cream,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              _ModeToggle(
+                                label: 'Sign in',
+                                selected: _ownerMode == OwnerMode.signIn,
+                                onTap: () => _switchOwnerMode(OwnerMode.signIn),
+                              ),
+                              _ModeToggle(
+                                label: 'Sign up',
+                                selected: _ownerMode == OwnerMode.signUp,
+                                onTap: () => _switchOwnerMode(OwnerMode.signUp),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+
+                      // Base URL field
+                      if (_authMode == AuthMode.owner) ...[
+                        Field(
+                          label: 'API Base URL',
+                          value: _baseUrlController.text,
+                          onChanged: (v) => _baseUrlController.text = v,
+                          icon: Icons.link,
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+
+                      // Owner Sign In
+                      if (_authMode == AuthMode.owner && _ownerMode == OwnerMode.signIn)
                         Form(
                           key: _ownerSignInFormKey,
                           child: Column(
                             children: [
-                              TextFormField(
-                                controller: _ownerEmailController,
-                                decoration: const InputDecoration(labelText: 'Email'),
-                                validator: (v) => (v == null || v.trim().isEmpty) ? 'Email is required' : null,
+                              Field(
+                                label: 'Email',
+                                value: _ownerEmailController.text,
+                                onChanged: (v) => _ownerEmailController.text = v,
+                                icon: Icons.mail,
+                                textInputAction: TextInputAction.next,
                               ),
-                              const SizedBox(height: 16),
-                              TextFormField(
-                                controller: _ownerPasswordController,
-                                obscureText: true,
-                                decoration: const InputDecoration(labelText: 'Password'),
-                                validator: (v) => (v == null || v.isEmpty) ? 'Password is required' : null,
+                              const SizedBox(height: 12),
+                              Field(
+                                label: 'Password',
+                                value: _ownerPasswordController.text,
+                                onChanged: (v) => _ownerPasswordController.text = v,
+                                icon: Icons.lock,
+                                textInputAction: TextInputAction.done,
+                                onSubmitted: (_) => _submit(),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 20),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _isSubmitting ? null : _submitOwnerSignIn,
-                            child: _isSubmitting
-                                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                                : const Text('Sign in as Owner'),
-                          ),
-                        ),
-                      ],
 
-                      if (_ownerMode == OwnerMode.signUp) ...[
+                      // Owner Sign Up
+                      if (_authMode == AuthMode.owner && _ownerMode == OwnerMode.signUp)
                         Form(
                           key: _ownerSignUpFormKey,
                           child: Column(
                             children: [
-                              TextFormField(
-                                controller: _orgNameController,
-                                decoration: const InputDecoration(labelText: 'Shop Name'),
-                                validator: (v) => (v == null || v.trim().isEmpty) ? 'Shop name is required' : null,
+                              Field(
+                                label: 'Workshop name',
+                                value: _orgNameController.text,
+                                onChanged: (v) => _orgNameController.text = v,
+                                icon: Icons.storefront,
+                                textInputAction: TextInputAction.next,
                               ),
-                              const SizedBox(height: 16),
-                              TextFormField(
-                                controller: _ownerNameController,
-                                decoration: const InputDecoration(labelText: 'Your Name'),
-                                validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+                              const SizedBox(height: 12),
+                              Field(
+                                label: 'Your name',
+                                value: _ownerNameController.text,
+                                onChanged: (v) => _ownerNameController.text = v,
+                                icon: Icons.badge,
+                                textInputAction: TextInputAction.next,
                               ),
-                              const SizedBox(height: 16),
-                              TextFormField(
-                                controller: _ownerSignUpEmailController,
-                                decoration: const InputDecoration(labelText: 'Email'),
-                                validator: (v) => (v == null || v.trim().isEmpty) ? 'Email is required' : null,
+                              const SizedBox(height: 12),
+                              Field(
+                                label: 'Email',
+                                value: _ownerSignUpEmailController.text,
+                                onChanged: (v) => _ownerSignUpEmailController.text = v,
+                                icon: Icons.mail,
+                                textInputAction: TextInputAction.next,
                               ),
-                              const SizedBox(height: 16),
-                              TextFormField(
-                                controller: _ownerSignUpPasswordController,
-                                obscureText: true,
-                                decoration: const InputDecoration(labelText: 'Password'),
-                                validator: (v) => (v == null || v.isEmpty) ? 'Password is required' : null,
+                              const SizedBox(height: 12),
+                              Field(
+                                label: 'Password',
+                                value: _ownerSignUpPasswordController.text,
+                                onChanged: (v) => _ownerSignUpPasswordController.text = v,
+                                icon: Icons.lock,
+                                textInputAction: TextInputAction.done,
+                                onSubmitted: (_) => _submit(),
                               ),
                             ],
                           ),
                         ),
+
+                      // Employee Sign In
+                      if (_authMode == AuthMode.employee)
+                        Form(
+                          key: _employeeFormKey,
+                          child: Column(
+                            children: [
+                              Field(
+                                label: 'Email',
+                                value: _employeeEmailController.text,
+                                onChanged: (v) => _employeeEmailController.text = v,
+                                icon: Icons.mail,
+                                textInputAction: TextInputAction.next,
+                              ),
+                              const SizedBox(height: 12),
+                              Field(
+                                label: 'Password',
+                                value: _employeePasswordController.text,
+                                onChanged: (v) => _employeePasswordController.text = v,
+                                icon: Icons.lock,
+                                textInputAction: TextInputAction.done,
+                                onSubmitted: (_) => _submit(),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                      // Customer Sign In
+                      if (_authMode == AuthMode.customer) ...[
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppTheme.sky.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.info, size: 17, color: AppTheme.sky),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Enter the email on your repair ticket to see your devices.',
+                                  style: TextStyle(
+                                    
+                                    fontSize: 12,
+                                    color: AppTheme.muted,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Form(
+                          key: _customerFormKey,
+                          child: Field(
+                            label: 'Email',
+                            value: _customerEmailController.text,
+                            onChanged: (v) => _customerEmailController.text = v,
+                            icon: Icons.mail,
+                            placeholder: 'Email on your ticket',
+                            textInputAction: TextInputAction.done,
+                            onSubmitted: (_) => _submit(),
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: 18),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: _isSubmitting ? null : _submit,
+                          icon: _isSubmitting
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Icon(busyIcon),
+                          label: Text(
+                            _isSubmitting ? 'Just a moment\u2026' : cta,
+                            style: const TextStyle(
+                              
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: roleMeta.tint,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(100),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Signup hint for owner
+                      if (_authMode == AuthMode.owner &&
+                          _ownerMode == OwnerMode.signUp)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: Text(
+                            'Creating your workshop sets up the org and signs you in automatically.',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              
+                              fontSize: 11.5,
+                              color: AppTheme.faint,
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
+
+                      // Error message
+                      if (_errorMessage != null) ...[
                         const SizedBox(height: 12),
                         Text(
-                          'Creates a new organization and owner account.',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
-                        ),
-                        const SizedBox(height: 20),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _isSubmitting ? null : _submitOwnerSignUp,
-                            child: _isSubmitting
-                                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                                : const Text('Create Shop & Sign In'),
+                          _errorMessage!,
+                          style: const TextStyle(
+                            
+                            fontSize: 12,
+                            color: AppTheme.coral,
                           ),
                         ),
                       ],
                     ],
-
-                    // ========== EMPLOYEE TAB ==========
-                    if (_authMode == AuthMode.employee) ...[
-                      Form(
-                        key: _employeeFormKey,
-                        child: Column(
-                          children: [
-                            TextFormField(
-                              controller: _employeeEmailController,
-                              decoration: const InputDecoration(labelText: 'Email'),
-                              validator: (v) => (v == null || v.trim().isEmpty) ? 'Email is required' : null,
-                            ),
-                            const SizedBox(height: 16),
-                            TextFormField(
-                              controller: _employeePasswordController,
-                              obscureText: true,
-                              decoration: const InputDecoration(labelText: 'Password'),
-                              validator: (v) => (v == null || v.isEmpty) ? 'Password is required' : null,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _isSubmitting ? null : _submitEmployee,
-                          child: _isSubmitting
-                              ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                              : const Text('Sign in as Employee'),
-                        ),
-                      ),
-                    ],
-
-                    // ========== CUSTOMER TAB ==========
-                    if (_authMode == AuthMode.customer) ...[
-                      Text(
-                        'Enter your email to check your repair status.',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
-                      ),
-                      const SizedBox(height: 12),
-                      Form(
-                        key: _customerFormKey,
-                        child: TextFormField(
-                          controller: _customerEmailController,
-                          decoration: const InputDecoration(labelText: 'Email'),
-                          validator: (v) => (v == null || v.trim().isEmpty) ? 'Email is required' : null,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _isSubmitting ? null : _submitCustomer,
-                          child: _isSubmitting
-                              ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                              : const Text('Check Status'),
-                        ),
-                      ),
-                    ],
-
-                    // Error message
-                    if (_errorMessage != null) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        _errorMessage!,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.redAccent,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ],
+                  ),
                 ),
+
+                const SizedBox(height: 22),
+                Text(
+                  _authMode == AuthMode.customer
+                      ? 'No account needed \u2014 just your email.'
+                      : 'Northgate Repair Co. \u00b7 v2.4',
+                  style: const TextStyle(
+                    
+                    fontSize: 12,
+                    color: AppTheme.faint,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+  }
+}
+
+class _SegOption extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final Color tint;
+  final VoidCallback onTap;
+
+  const _SegOption({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.tint,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          height: 44,
+          decoration: BoxDecoration(
+            color: selected ? tint.withOpacity(0.16) : Colors.transparent,
+            borderRadius: BorderRadius.circular(100),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 17,
+                color: selected ? tint : AppTheme.muted,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? tint : AppTheme.muted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ModeToggle extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _ModeToggle({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 36,
+          decoration: BoxDecoration(
+            color: selected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(9),
+            boxShadow: selected
+                ? [BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  )]
+                : null,
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+                color: selected ? AppTheme.ink : AppTheme.muted,
               ),
             ),
           ),

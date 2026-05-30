@@ -3,10 +3,16 @@ import 'package:techfix/models/repair_job.dart';
 import 'package:techfix/screens/login_screen.dart';
 import 'package:techfix/services/techfix_api.dart';
 import 'package:techfix/state/app_session_scope.dart';
+import 'package:techfix/theme/app_theme.dart';
 import 'package:techfix/widgets/app_background.dart';
-import 'package:techfix/widgets/job_card.dart';
+import 'package:techfix/widgets/avatar.dart';
+import 'package:techfix/widgets/empty_state.dart';
+import 'package:techfix/widgets/error_state.dart';
+import 'package:techfix/widgets/loading_state.dart';
+import 'package:techfix/widgets/pill.dart';
 import 'package:techfix/widgets/section_header.dart';
 import 'package:techfix/widgets/stat_card.dart';
+import 'package:techfix/widgets/status_badge.dart';
 
 class CustomerStatusScreen extends StatefulWidget {
   const CustomerStatusScreen({super.key});
@@ -23,22 +29,19 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
   bool _initializedSessionData = false;
 
   @override
-  void initState() {
-    super.initState();
+  void dispose() {
+    _customerIdController.dispose();
+    super.dispose();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
-    if (_initializedSessionData) {
-      return;
-    }
+    if (_initializedSessionData) return;
     _initializedSessionData = true;
 
     final session = AppSessionScope.of(context);
     final employee = session.employee;
-
     if (employee == null) return;
 
     final role = (employee['role'] as String?)?.trim() ?? '';
@@ -50,16 +53,9 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
     }
   }
 
-  @override
-  void dispose() {
-    _customerIdController.dispose();
-    super.dispose();
-  }
-
   void _loadCustomer() {
     final session = AppSessionScope.of(context);
     final id = int.tryParse(_customerIdController.text.trim());
-
     if (id == null || id <= 0) {
       setState(() {
         _errorMessage = 'Enter a valid customer ID.';
@@ -78,73 +74,8 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
     });
   }
 
-  /// Show repairs for a specific device
-  void _showDeviceRepairs(
-    Map<String, dynamic> device,
-    List<RepairJob> jobs,
-    Map<int, String> deviceLabelById,
-    String customerName,
-  ) {
-    final deviceId = device['device_id'] as int;
-    final deviceLabel = _deviceLabel(device);
-    final deviceJobs = jobs.where((job) => job.deviceId == deviceId).toList();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Device Repairs'),
-            const SizedBox(height: 4),
-            Text(
-              deviceLabel,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: Colors.grey),
-            ),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (deviceJobs.isEmpty)
-                Text(
-                  'No repairs for this device.',
-                  style: Theme.of(context).textTheme.bodySmall,
-                )
-              else
-                ...deviceJobs.map(
-                  (job) => JobCard(
-                    job: job,
-                    customerNameOverride: customerName,
-                    deviceLabelOverride: deviceLabel,
-                    onCancel: job.status.toLowerCase() == 'pending'
-                        ? () {
-                            Navigator.pop(context);
-                            _cancelJob(job.id);
-                          }
-                        : null,
-                  ),
-                ),
-            ],
-          ),
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _cancelJob(int jobId) async {
     final session = AppSessionScope.of(context);
-
     try {
       await TechFixApi(
         baseUrl: session.baseUrl,
@@ -153,7 +84,6 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
       ).cancelRepairJob(jobId);
 
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Job cancelled successfully.')),
       );
@@ -175,19 +105,23 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
       });
     } catch (error) {
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Cancel failed: $error'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Cancel failed: $error'), backgroundColor: AppTheme.coral),
       );
     }
   }
 
-  String _asText(dynamic value, {String fallback = '—'}) {
+  String _asText(dynamic value, {String fallback = '\u2014'}) {
     final text = value?.toString().trim() ?? '';
     return text.isEmpty ? fallback : text;
+  }
+
+  String _shortDate(String raw) {
+    final dt = DateTime.tryParse(raw);
+    if (dt == null) return raw;
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final y = dt.year.toString().substring(2);
+    return '${months[dt.month - 1]} \'$y';
   }
 
   String _deviceLabel(Map<String, dynamic> device) {
@@ -198,112 +132,203 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
     return parts.isNotEmpty ? parts.join(' ') : type;
   }
 
-  /// Format date to user-friendly format (e.g., "May 15, 2026")
-  String _formatDate(dynamic dateValue) {
-    if (dateValue == null) return '—';
-    try {
-      final datetime = DateTime.parse(dateValue.toString());
-      final months = [
-        'January',
-        'February',
-        'March',
-        'April',
-        'May',
-        'June',
-        'July',
-        'August',
-        'September',
-        'October',
-        'November',
-        'December',
-      ];
-      return '${months[datetime.month - 1]} ${datetime.day}, ${datetime.year}';
-    } catch (_) {
-      return dateValue.toString();
+  String _deviceIcon(Map<String, dynamic> device) {
+    final type = _asText(device['type'], fallback: '').toLowerCase();
+    if (type.contains('phone') || type.contains('mobile')) return 'smartphone';
+    if (type.contains('laptop')) return 'laptop_mac';
+    if (type.contains('tablet')) return 'tablet_mac';
+    if (type.contains('watch')) return 'watch';
+    if (type.contains('audio') || type.contains('headphone')) return 'headphones';
+    if (type.contains('console')) return 'sports_esports';
+    return 'devices_other';
+  }
+
+  IconData _deviceIconData(Map<String, dynamic> device) {
+    final icon = _deviceIcon(device);
+    switch (icon) {
+      case 'smartphone': return Icons.smartphone;
+      case 'laptop_mac': return Icons.laptop_mac;
+      case 'tablet_mac': return Icons.tablet_mac;
+      case 'watch': return Icons.watch;
+      case 'headphones': return Icons.headphones;
+      case 'sports_esports': return Icons.sports_esports;
+      default: return Icons.devices_other;
     }
   }
 
-  /// Show profile dialog
-  void _showProfileDialog(Map<String, dynamic> customer) {
-    final customerName = _asText(customer['name'], fallback: 'Customer');
-    final customerPhone = _asText(customer['phone']);
-    final customerEmail = _asText(customer['email']);
-    final joined = _formatDate(customer['created_at']);
+  void _showDeviceJobsDialog(Map<String, dynamic> device, List<RepairJob> allJobs) {
+    final deviceId = device['device_id'] as int;
+    final deviceJobs = allJobs.where((job) => job.deviceId == deviceId).toList();
 
-    showDialog(
+    showGeneralDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('My Profile'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Customer name header
-              Center(
-                child: Column(
-                  children: [
-                    CircleAvatar(
-                      radius: 40,
-                      backgroundColor: Colors.blue[200],
-                      child: Text(
-                        customerName[0].toUpperCase(),
-                        style: const TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue,
+      barrierDismissible: true,
+      barrierLabel: '',
+      barrierColor: const Color(0x6B141414),
+      transitionDuration: const Duration(milliseconds: 180),
+      pageBuilder: (context, a1, a2) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: GestureDetector(
+              onTap: () {},
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 22),
+                width: double.infinity,
+                constraints: const BoxConstraints(maxWidth: 340, maxHeight: 500),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(26),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: Padding(
+                    padding: const EdgeInsets.all(22),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 46,
+                              height: 46,
+                              decoration: BoxDecoration(
+                                color: AppTheme.sky.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Icon(_deviceIconData(device), size: 24, color: AppTheme.sky),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _deviceLabel(device),
+                                    style: const TextStyle(
+                                      
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppTheme.ink,
+                                      letterSpacing: -0.3,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${deviceJobs.length} repair${deviceJobs.length != 1 ? 's' : ''} on record',
+                                    style: const TextStyle(
+                                      
+                                      fontSize: 12.5,
+                                      color: AppTheme.faint,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(Icons.close, color: AppTheme.muted),
+                            ),
+                          ],
                         ),
-                      ),
+                        const SizedBox(height: 16),
+                        Flexible(
+                          child: ListView(
+                            shrinkWrap: true,
+                            children: deviceJobs.map((job) {
+                              final canCancel = job.status.toLowerCase() == 'pending';
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 11),
+                                padding: const EdgeInsets.all(13),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: AppTheme.line),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          '#${job.id}',
+                                          style: const TextStyle(
+                                            
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppTheme.faint,
+                                          ),
+                                        ),
+                                        StatusBadge(status: job.status, sm: true),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      job.description,
+                                      style: const TextStyle(
+                                        
+                                        fontSize: 13.5,
+                                        color: AppTheme.muted,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 11),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          '\$${(job.finalCost ?? job.estimatedCost).toStringAsFixed(2)}',
+                                          style: const TextStyle(
+                                            
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppTheme.ink,
+                                          ),
+                                        ),
+                                        if (canCancel)
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                              _cancelJob(job.id);
+                                            },
+                                            style: TextButton.styleFrom(
+                                              foregroundColor: AppTheme.coral,
+                                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                                              minimumSize: Size.zero,
+                                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                            ),
+                                            child: const Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(Icons.cancel, size: 16),
+                                                SizedBox(width: 4),
+                                                Text('Cancel', style: TextStyle(fontSize: 13)),
+                                              ],
+                                            ),
+                                          ),
+                                        if (job.status.toLowerCase() == 'ready')
+                                          const Pill(
+                                            color: AppTheme.teal,
+                                            icon: Icons.storefront,
+                                            child: Text('Ready for pickup'),
+                                          ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      customerName,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 24),
-              // Contact info
-              _profileField('Email', customerEmail),
-              const SizedBox(height: 16),
-              _profileField('Phone', customerPhone),
-              const SizedBox(height: 16),
-              _profileField('Customer ID', _asText(customer['customer_id'])),
-              const SizedBox(height: 16),
-              _profileField('Member Since', joined),
-            ],
+            ),
           ),
         ),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
       ),
-    );
-  }
-
-  /// Build a profile field with label and value
-  Widget _profileField(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(value, style: const TextStyle(fontSize: 16)),
-      ],
     );
   }
 
@@ -320,193 +345,329 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
   Widget build(BuildContext context) {
     return AppBackground(
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Track your repair',
-                style: Theme.of(context).textTheme.headlineMedium,
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'My repairs',
+                    style: TextStyle(
+                      
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.ink,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Track your devices',
+                    style: TextStyle(
+                      
+                      fontSize: 14,
+                      color: AppTheme.muted,
+                    ),
+                  ),
+                ],
               ),
               TextButton(onPressed: _signOut, child: const Text('Sign out')),
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            _isCustomerRole
-                ? 'Here is your current repair status.'
-                : 'Search by customer ID to see live status updates.',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 20),
 
-          // Only show search if user is NOT a customer
+          // Search by customer ID (when not customer role)
           if (!_isCustomerRole) ...[
             Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: _customerIdController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      hintText: 'Customer ID',
-                      prefixIcon: const Icon(Icons.search),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppTheme.line2),
+                    ),
+                    child: TextField(
+                      controller: _customerIdController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        hintText: 'Customer ID',
+                        prefixIcon: Icon(Icons.search),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(vertical: 14),
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 12),
-                ElevatedButton(
+                FilledButton(
                   onPressed: _loadCustomer,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppTheme.sky,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  ),
                   child: const Text('Load'),
                 ),
               ],
             ),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                _errorMessage!,
+                style: const TextStyle(fontSize: 12, color: AppTheme.coral),
+              ),
+            ],
           ],
 
-          if (_errorMessage != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              _errorMessage!,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: Colors.redAccent),
-            ),
-          ],
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+
           if (_customerFuture == null && !_isCustomerRole)
-            Text(
+            const Text(
               'Load a customer to view their repair jobs.',
-              style: Theme.of(context).textTheme.bodySmall,
+              style: TextStyle( fontSize: 14, color: AppTheme.faint),
             )
           else if (_customerFuture != null)
             FutureBuilder<Map<String, dynamic>>(
               future: _customerFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const LoadingState(count: 3);
                 }
 
                 if (snapshot.hasError || !snapshot.hasData) {
-                  final error = snapshot.error?.toString() ?? 'Unknown error';
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Unable to load customer data',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.redAccent,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        error,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.redAccent,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
+                  return ErrorState(
+                    title: 'Unable to load customer data',
+                    body: snapshot.error?.toString() ?? 'Unknown error',
+                    onRetry: () => setState(() {
+                      final session = AppSessionScope.of(context);
+                      if (_isCustomerRole) {
+                        _customerFuture = TechFixApi(
+                          baseUrl: session.baseUrl,
+                          email: session.email,
+                          password: session.password,
+                        ).getCustomerMe();
+                      }
+                    }),
                   );
                 }
 
                 final data = snapshot.data!;
-                final customer =
-                    (data['customer'] as Map<String, dynamic>?) ?? data;
-                final devices =
-                    (data['devices'] as List<dynamic>?)
-                        ?.cast<Map<String, dynamic>>() ??
-                    [];
-                final jobs =
-                    (data['repair_jobs'] as List<dynamic>?)
+                final customer = (data['customer'] as Map<String, dynamic>?) ?? data;
+                final devices = (data['devices'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
+                final allJobs = (data['repair_jobs'] as List<dynamic>?)
                         ?.cast<Map<String, dynamic>>()
                         .map(RepairJob.fromApi)
                         .toList() ??
                     [];
-                final deviceLabelById = {
-                  for (final device in devices)
-                    (device['device_id'] as int): _deviceLabel(device),
-                };
-                final customerName = _asText(
-                  customer['name'],
-                  fallback: 'Customer',
-                );
-                final activeJobs = jobs
-                    .where(
-                      (job) =>
-                          job.status.toLowerCase() != 'cancelled' &&
-                          job.status.toLowerCase() != 'delivered',
-                    )
+                final customerName = _asText(customer['name'], fallback: 'Customer');
+                final customerPhone = _asText(customer['phone']);
+                final memberSince = _asText(customer['since'] ?? customer['created_at']);
+
+                final activeJobs = allJobs
+                    .where((j) => j.status.toLowerCase() != 'cancelled' && j.status.toLowerCase() != 'delivered')
                     .length;
-                final readyJobs = jobs
-                    .where((job) => job.status.toLowerCase() == 'ready')
+                final readyCount = allJobs
+                    .where((j) => j.status.toLowerCase() == 'ready')
                     .length;
+
+                if (!_isCustomerRole && devices.isEmpty && allJobs.isEmpty) {
+                  return const EmptyState(
+                    icon: Icons.devices_other,
+                    title: 'No devices yet',
+                    body: 'When you drop off a device for repair, it\'ll show up here so you can track its progress.',
+                    color: AppTheme.sky,
+                  );
+                }
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Profile card
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppTheme.line),
+                      ),
+                      child: Row(
+                        children: [
+                          Avatar(name: customerName, size: 54, color: AppTheme.sky),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  customerName,
+                                  style: const TextStyle(
+                                    
+                                    fontSize: 19,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.ink,
+                                    letterSpacing: -0.3,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.call, size: 14, color: AppTheme.faint),
+                                    const SizedBox(width: 6),
+                                    Flexible(
+                                      child: Text(
+                                        customerPhone,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          
+                                          fontSize: 13,
+                                          color: AppTheme.muted,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              const Pill(
+                                color: AppTheme.teal,
+                                icon: Icons.verified,
+                                child: Text('Member'),
+                              ),
+                              if (memberSince.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 3),
+                                  child: Text(
+                                    _shortDate(memberSince),
+                                    style: const TextStyle(
+                                      
+                                      fontSize: 11,
+                                      color: AppTheme.muted,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Snapshot stats
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const SectionHeader(title: 'My Account'),
-                        ElevatedButton.icon(
-                          onPressed: () => _showProfileDialog(customer),
-                          icon: const Icon(Icons.person_outline),
-                          label: const Text('View Profile'),
+                        Expanded(
+                          child: StatCard(
+                            label: 'Active repairs',
+                            value: activeJobs.toString(),
+                            icon: Icons.build,
+                            accent: AppTheme.sky,
+                            sub: 'in the shop now',
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: StatCard(
+                            label: 'Ready today',
+                            value: readyCount.toString(),
+                            icon: Icons.check_circle,
+                            accent: AppTheme.teal,
+                            sub: 'for pickup',
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 24),
-                    const SectionHeader(title: 'Snapshot'),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: [
-                        StatCard(
-                          label: 'Active jobs',
-                          value: activeJobs.toString(),
-                        ),
-                        StatCard(
-                          label: 'Ready today',
-                          value: readyJobs.toString(),
-                        ),
-                        const StatCard(label: 'Average ETA', value: '—'),
-                      ],
+                    const SizedBox(height: 20),
+
+                    // Devices
+                    SectionHeader(
+                      title: 'Your devices',
+                      count: devices.length,
                     ),
-                    const SizedBox(height: 24),
-                    const SectionHeader(title: 'My Devices'),
                     const SizedBox(height: 12),
+
                     if (devices.isEmpty)
-                      Text(
-                        'No devices found for this customer.',
-                        style: Theme.of(context).textTheme.bodySmall,
+                      const EmptyState(
+                        icon: Icons.devices_other,
+                        title: 'No devices yet',
+                        body: 'When you drop off a device for repair, it\'ll show up here so you can track its progress.',
+                        color: AppTheme.sky,
                       )
                     else
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: devices
-                            .map(
-                              (device) => ActionChip(
-                                label: Text(_deviceLabel(device)),
-                                avatar: const Icon(Icons.devices_outlined),
-                                onPressed: () => _showDeviceRepairs(
-                                  device,
-                                  jobs,
-                                  deviceLabelById,
-                                  customerName,
-                                ),
+                      ...devices.map((device) {
+                        final deviceJobsForCard = allJobs.where((j) => j.deviceId == (device['device_id'] as int)).toList();
+                        final act = deviceJobsForCard.where((j) => j.status.toLowerCase() == 'pending' || j.status.toLowerCase() == 'repairing').firstOrNull;
+                        final rdy = deviceJobsForCard.where((j) => j.status.toLowerCase() == 'ready').firstOrNull;
+                        final lead = rdy ?? act ?? deviceJobsForCard.firstOrNull;
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 11),
+                          child: GestureDetector(
+                            onTap: () => _showDeviceJobsDialog(device, allJobs),
+                            child: Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: AppTheme.line),
                               ),
-                            )
-                            .toList(),
-                      ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 46,
+                                    height: 46,
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.cream,
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    child: Icon(_deviceIconData(device), size: 24, color: AppTheme.ink),
+                                  ),
+                                  const SizedBox(width: 13),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          _deviceLabel(device),
+                                          style: const TextStyle(
+                                            
+                                            fontSize: 15.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppTheme.ink,
+                                          ),
+                                        ),
+                                        Text(
+                                          '${deviceJobsForCard.length} repair${deviceJobsForCard.length != 1 ? 's' : ''} \u00b7 tap to view',
+                                          style: const TextStyle(
+                                            
+                                            fontSize: 12.5,
+                                            color: AppTheme.faint,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (lead != null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(right: 8),
+                                      child: StatusBadge(status: lead.status, sm: true),
+                                    ),
+                                  const Icon(Icons.chevron_right, size: 22, color: AppTheme.faint),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
                   ],
                 );
               },

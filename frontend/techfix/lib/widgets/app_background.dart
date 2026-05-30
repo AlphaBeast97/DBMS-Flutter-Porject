@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:techfix/theme/app_theme.dart';
 
 class AppBackground extends StatelessWidget {
   final Widget child;
@@ -12,26 +13,26 @@ class AppBackground extends StatelessWidget {
         Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFFFDF8F2), Color(0xFFF6EBDD)],
+              begin: Alignment(-0.94, -0.34),  // 160° angle
+              end: Alignment(0.94, 0.34),
+              colors: [AppTheme.cream, Color(0xFFF1E9DB), AppTheme.beige],
             ),
           ),
         ),
         Positioned(
-          top: -60,
-          right: -40,
-          child: _GlowCircle(size: 180, color: Color(0x33F26B4A)),
+          top: -70,
+          left: -60,
+          child: _GlowCircle(size: 240, color: AppTheme.coral.withOpacity(0.16)),
         ),
         Positioned(
-          bottom: -80,
-          left: -20,
-          child: _GlowCircle(size: 220, color: Color(0x332A9D8F)),
+          top: 180,
+          right: 260,
+          child: _GlowCircle(size: 220, color: AppTheme.teal.withOpacity(0.13)),
         ),
         Positioned(
-          top: 200,
-          left: -50,
-          child: _GlowCircle(size: 140, color: Color(0x223D7BD1)),
+          top: 560,
+          left: -80,
+          child: _GlowCircle(size: 280, color: AppTheme.sky.withOpacity(0.10)),
         ),
         SafeArea(child: child),
       ],
@@ -50,7 +51,10 @@ class _GlowCircle extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: color,
+      ),
     );
   }
 }

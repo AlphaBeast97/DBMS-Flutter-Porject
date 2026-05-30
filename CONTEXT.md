@@ -69,7 +69,7 @@ Status: IMPLEMENTED IN PHASE 2
 - [x] Phase 1: MySQL Schema & Seeding
 - [x] Phase 2: Express API
 - [x] Phase 3: Flutter UI & API Integration (completed)
-- [ ] Phase 4: Polish & Basic Error Handling
+- [x] Phase 4: Claude Design UI Implementation (completed)
 
 ## Decisions Log
 
@@ -138,8 +138,18 @@ Status: IMPLEMENTED IN PHASE 2
 
 ### Phase 4
 
-- Pending
+- Claude Design system fully implemented across all screens.
+- Phase 4a: Design System Components — Avatar, Field, StatusBadge, TechFixDialog, Sheet, EmptyState, LoadingState/SkeletonCard, ErrorState, Pill widgets created. StatCard, SectionHeader, AppBackground, JobCard, InventoryCard refactored to match design tokens.
+- Phase 4b: Login screen redesigned with Brandmark, role icons/blurbs per tab, Field widget inputs, SegmentedButton replacement, improved spacing.
+- Phase 4c: Customer screen redesigned with profile card (avatar + phone + member pill), interactive device cards with StatusBadge, DeviceJobsDialog styled per design, loading/empty/error states.
+- Phase 4d: Technician console redesigned with FAB + header icon, filter chips (All/Pending/Repairing), multi-step CreateJobSheet (3 steps with stepper), LogPartSheet with job radio selector, StatusRadioDialog with styled radio options, EditDescDialog with description + cost, loading/empty/error states.
+- Phase 4e: Manager dashboard redesigned with CustomPaint donut chart (SVG-style), KPI stat cards (active staff, avg turnaround), revenue card with finalized/estimated amounts + dual progress bar toward target, AddStaffDialog. fl_chart dependency no longer used (replaced by CustomPaint).
+- All API calls preserved (no breaking data flow changes).
+- Color tokens: Coral #F26B4A, Teal #2A9D8F, Sky #2D7BD1, Clay #B86B4B, Ink #141414, Cream #F7F3ED, Beige #EFE7DA, Grey #9A958C. Additional derived tokens: line, line2, muted, faint.
+- Status values normalized to lowercase in StatusBadge (case-insensitive matching).
+- New widget files added: avatar.dart, field.dart, status_badge.dart, techfix_dialog.dart, sheet.dart, empty_state.dart, loading_state.dart, error_state.dart, pill.dart.
+- Refactored widget files: stat_card.dart, section_header.dart, app_background.dart, job_card.dart, inventory_card.dart.
 
 ## Final Summary
 
-Status: PHASE 3 COMPLETE (Flutter UI fully integrated with backend API)
+Status: PHASE 4 COMPLETE (Claude Design UI implementation across all screens)
