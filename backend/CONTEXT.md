@@ -19,7 +19,6 @@ Phase 2 endpoints implemented; access control pending.
 - GET /api/repair-jobs
 - PUT /api/repair-jobs/:job_id
 - POST /api/inventory-usage
-- POST /api/organizations
 - POST /api/employees/owner
 - POST /api/employees
 - PUT /api/repair-jobs/:job_id/description
@@ -62,11 +61,6 @@ Auth used: HTTP Basic with seeded owner account.
   - How: `curl -u "owner@techfix.com:Owner123" -H "Content-Type: application/json" -X PUT http://localhost:3000/api/repair-jobs/12 -d '{"status":"Ready"}'`
   - Expected: 200 + rows affected
   - Received: 200 + `{ rows_affected: 1 }`
-
-- POST /api/organizations
-  - How: `curl -u "owner@techfix.com:Owner123" -H "Content-Type: application/json" -X POST http://localhost:3000/api/organizations -d '{"name":"New Org Ltd"}'`
-  - Expected: 201 + new organization id
-  - Received: 201 + `{ organization_id: 13 }`
 
 - POST /api/employees/owner
   - How: `curl -H "Content-Type: application/json" -X POST http://localhost:3000/api/employees/owner -d '{"organization_name":"Shop A","owner_name":"Alice","owner_email":"alice@shopa.com","password":"Owner123"}'`

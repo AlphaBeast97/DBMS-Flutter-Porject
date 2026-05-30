@@ -50,7 +50,6 @@ Status: IMPLEMENTED IN PHASE 2
 | ------ | -------------------------------- | ------------------------------------------- | ------- |
 | POST   | /api/auth/employee               | Employee login via basic auth               | ✅ DONE |
 | POST   | /api/auth/customer               | Customer login via basic auth               | ✅ DONE |
-| POST   | /api/organizations               | Create organization (owner setup)           | ✅ DONE |
 | POST   | /api/employees/owner             | Create owner + organization (initial setup) | ✅ DONE |
 | POST   | /api/employees                   | Create employee (owner-protected)           | ✅ DONE |
 | POST   | /api/customers                   | Register a new customer                     | ✅ DONE |

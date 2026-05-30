@@ -23,24 +23,6 @@ DELIMITER ;
 
 -- Stored procedures: organization and employee setup
 DELIMITER $$
-CREATE PROCEDURE sp_create_organization(
-    IN p_name VARCHAR(100)
-)
-BEGIN
-    -- Validate required inputs
-    IF p_name IS NULL OR p_name = '' THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Organization name is required.';
-    END IF;
-
-    -- Insert organization
-    INSERT INTO organizations (name)
-    VALUES (p_name);
-
-    SELECT LAST_INSERT_ID() AS organization_id;
-END$$
-DELIMITER ;
-
-DELIMITER $$
 CREATE PROCEDURE sp_create_owner(
     IN p_org_name VARCHAR(100),
     IN p_owner_name VARCHAR(100),

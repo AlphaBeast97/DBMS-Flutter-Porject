@@ -56,85 +56,6 @@ class _ManagerScreenState extends State<ManagerScreen> {
     );
   }
 
-  /// Show dialog to create a new organization
-  void _showCreateOrgDialog() {
-    final nameController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-    bool isSubmitting = false;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Create Organization'),
-          content: Form(
-            key: formKey,
-            child: TextFormField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Organization Name',
-                hintText: 'e.g., Tech Fix Shop A',
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Name required';
-                }
-                return null;
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: isSubmitting ? null : () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: isSubmitting
-                  ? null
-                  : () async {
-                      if (!formKey.currentState!.validate()) return;
-
-                      setState(() => isSubmitting = true);
-
-                      try {
-                        final session = AppSessionScope.of(context);
-                        final api = TechFixApi(
-                          baseUrl: session.baseUrl,
-                          email: session.email,
-                          password: session.password,
-                        );
-
-                        await api.createOrganization(name: nameController.text);
-
-                        if (!mounted) return;
-                        Navigator.pop(context);
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Organization created!'),
-                          ),
-                        );
-                      } catch (error) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Error: $error'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      } finally {
-                        if (mounted) {
-                          setState(() => isSubmitting = false);
-                        }
-                      }
-                    },
-              child: const Text('Create'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   /// Show dialog to add a new employee
   void _showAddEmployeeDialog() {
     final nameController = TextEditingController();
@@ -277,25 +198,11 @@ class _ManagerScreenState extends State<ManagerScreen> {
           ),
           const SizedBox(height: 20),
 
-          // Organization & Employee Management
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _showCreateOrgDialog,
-                  icon: const Icon(Icons.business_outlined),
-                  label: const Text('New org'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: _showAddEmployeeDialog,
-                  icon: const Icon(Icons.person_add_outlined),
-                  label: const Text('Add staff'),
-                ),
-              ),
-            ],
+          // Employee Management
+          ElevatedButton.icon(
+            onPressed: _showAddEmployeeDialog,
+            icon: const Icon(Icons.person_add_outlined),
+            label: const Text('Add staff'),
           ),
           const SizedBox(height: 24),
 

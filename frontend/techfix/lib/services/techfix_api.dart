@@ -295,21 +295,4 @@ class TechFixApi {
     return body['data']['employee_id'] as int;
   }
 
-  // ========== ORGANIZATIONS ==========
-
-  /// POST /api/organizations - Create a new organization (Owner only)
-  Future<int> createOrganization({required String name}) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/organizations'),
-      headers: _headers,
-      body: jsonEncode({'name': name}),
-    );
-
-    if (response.statusCode != 201) {
-      throw Exception(_getErrorMessage(response.statusCode, response.body));
-    }
-
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
-    return body['data']['organization_id'] as int;
-  }
 }
