@@ -35,7 +35,7 @@ class InventoryCard extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                'Job #${usage.jobId} - Logged by ${usage.loggedBy}',
+                'Job #${usage.jobId} - Logged by ${usage.loggedBy.isNotEmpty ? usage.loggedBy : 'Unknown'}',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],

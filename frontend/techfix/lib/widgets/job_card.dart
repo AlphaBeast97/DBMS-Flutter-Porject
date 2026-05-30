@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:techfix/models/repair_job.dart';
 import 'package:techfix/theme/app_theme.dart';
+import 'package:techfix/models/inventory_usage.dart';
+import 'package:techfix/widgets/inventory_card.dart';
 
-class JobCard extends StatelessWidget {
+class JobCard extends StatefulWidget {
   final RepairJob job;
   final VoidCallback? onTap;
   final String? customerNameOverride;
   final String? deviceLabelOverride;
   final VoidCallback? onCancel;
   final VoidCallback? onEdit;
+  final List<InventoryUsage>? usages;
 
   const JobCard({
     super.key,
@@ -18,17 +21,28 @@ class JobCard extends StatelessWidget {
     this.deviceLabelOverride,
     this.onCancel,
     this.onEdit,
+    this.usages,
   });
 
   @override
+  State<JobCard> createState() => _JobCardState();
+}
+
+class _JobCardState extends State<JobCard> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
+    final job = widget.job;
     final statusColor = AppTheme.statusColor(job.status);
-    final deviceLabel = deviceLabelOverride ?? job.deviceLabel;
-    final customerName = customerNameOverride ?? job.customerName;
+    final deviceLabel = widget.deviceLabelOverride ?? job.deviceLabel;
+    final customerName = widget.customerNameOverride ?? job.customerName;
+    final usages = widget.usages ?? [];
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: GestureDetector(
-        onTap: onTap,
+        onTap: widget.onTap,
         child: Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -65,12 +79,23 @@ class JobCard extends StatelessWidget {
                                 ),
                           ),
                         ),
-                        if (onEdit != null) ...[
+                        if (widget.onEdit != null) ...[
                           const SizedBox(width: 8),
                           IconButton(
-                            onPressed: onEdit,
+                            onPressed: widget.onEdit,
                             icon: const Icon(Icons.edit_outlined),
                             tooltip: 'Edit description',
+                          ),
+                        ],
+                        if (usages.isNotEmpty) ...[
+                          const SizedBox(width: 4),
+                          IconButton(
+                            onPressed: () =>
+                                setState(() => _expanded = !_expanded),
+                            icon: Icon(
+                              _expanded ? Icons.expand_less : Icons.expand_more,
+                            ),
+                            tooltip: _expanded ? 'Hide parts' : 'Show parts',
                           ),
                         ],
                       ],
@@ -87,8 +112,6 @@ class JobCard extends StatelessWidget {
                   Text(
                     job.description,
                     style: Theme.of(context).textTheme.bodyMedium,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 const SizedBox(height: 12),
                 Row(
@@ -108,7 +131,7 @@ class JobCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                if (onTap != null) ...[
+                if (widget.onTap != null) ...[
                   const SizedBox(height: 12),
                   Text(
                     'Tap to update status',
@@ -118,14 +141,32 @@ class JobCard extends StatelessWidget {
                     ),
                   ),
                 ],
-                if (onCancel != null) ...[
+                if (widget.onCancel != null) ...[
                   const SizedBox(height: 12),
                   Align(
                     alignment: Alignment.centerRight,
                     child: OutlinedButton.icon(
-                      onPressed: onCancel,
+                      onPressed: widget.onCancel,
                       icon: const Icon(Icons.cancel_outlined),
                       label: const Text('Cancel job'),
+                    ),
+                  ),
+                ],
+
+                // Inventory usage expanded area
+                if (_expanded && usages.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: const EdgeInsets.all(8),
+                    child: Column(
+                      children: usages
+                          .map((u) => InventoryCard(usage: u))
+                          .toList(),
                     ),
                   ),
                 ],

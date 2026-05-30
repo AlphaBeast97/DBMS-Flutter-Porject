@@ -5,6 +5,7 @@ import 'package:techfix/services/techfix_api.dart';
 import 'package:techfix/state/app_session_scope.dart';
 import 'package:techfix/widgets/app_background.dart';
 import 'package:techfix/widgets/job_card.dart';
+import 'package:techfix/models/inventory_usage.dart';
 import 'package:techfix/widgets/section_header.dart';
 
 class TechnicianScreen extends StatefulWidget {
@@ -39,6 +40,37 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
     );
     final rows = await api.getRepairJobs();
     return rows.map(RepairJob.fromApi).toList();
+  }
+
+  /// Fetch inventory usage grouped by job id for the provided jobs.
+  Future<Map<int, List<InventoryUsage>>> _fetchUsagesForJobs(
+    List<RepairJob> jobs,
+  ) async {
+    final session = AppSessionScope.of(context);
+    final api = TechFixApi(
+      baseUrl: session.baseUrl,
+      email: session.email,
+      password: session.password,
+    );
+
+    final Map<int, List<InventoryUsage>> map = {};
+    final customerIds = jobs.map((j) => j.customerId).toSet();
+
+    for (final cid in customerIds) {
+      try {
+        final detail = await api.getCustomerDetail(cid);
+        final List<dynamic> usages =
+            (detail['inventory_usage'] ?? []) as List<dynamic>;
+        for (final u in usages) {
+          final inv = InventoryUsage.fromApi(u as Map<String, dynamic>);
+          map.putIfAbsent(inv.jobId, () => []).add(inv);
+        }
+      } catch (_) {
+        // ignore failures for individual customers
+      }
+    }
+
+    return map;
   }
 
   void _refresh() {
@@ -793,16 +825,24 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
                 );
               }
 
-              return Column(
-                children: jobs
-                    .map(
-                      (job) => JobCard(
+              final usagesFuture = _fetchUsagesForJobs(jobs);
+
+              return FutureBuilder<Map<int, List<InventoryUsage>>>(
+                future: usagesFuture,
+                builder: (context, usagesSnap) {
+                  final usagesMap = usagesSnap.data ?? {};
+                  return Column(
+                    children: jobs.map((job) {
+                      final usages = usagesMap[job.id] ?? [];
+                      return JobCard(
                         job: job,
                         onTap: () => _showUpdateStatusDialog(job),
                         onEdit: () => _showEditDescriptionDialog(job),
-                      ),
-                    )
-                    .toList(),
+                        usages: usages,
+                      );
+                    }).toList(),
+                  );
+                },
               );
             },
           ),
