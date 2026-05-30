@@ -4,6 +4,34 @@
 
 ---
 
+## Table of Contents
+
+1. [Architecture Overview](#architecture-overview)
+2. [Project Structure](#project-structure)
+3. [Database](#database)
+   - [Entity Relationship](#entity-relationship)
+   - [Status Lifecycle](#status-lifecycle)
+   - [Stored Procedures & Functions](#stored-procedures--functions)
+   - [Trigger](#trigger)
+4. [Backend (Express API)](#backend-express-api)
+   - [Route → Controller → Procedure Mapping](#route--controller--procedure-mapping)
+   - [Middleware Chain](#middleware-chain)
+   - [API Endpoints](#api-endpoints)
+   - [Data Flow: Full Request Lifecycle](#data-flow-full-request-lifecycle)
+5. [Frontend (Flutter)](#frontend-flutter)
+   - [Screen Navigation](#screen-navigation)
+   - [Role-Based Tab Visibility](#role-based-tab-visibility)
+   - [Widget Hierarchy](#widget-hierarchy)
+   - [File Inventory](#file-inventory)
+   - [Design Tokens](#design-tokens)
+6. [End-to-End Scenarios](#end-to-end-scenarios)
+   - [Scenario 1: Technician creates a repair job](#scenario-1-technician-creates-a-repair-job)
+   - [Scenario 2: Owner views dashboard](#scenario-2-owner-views-dashboard)
+7. [Key Decision Log](#key-decision-log)
+8. [Running the Project](#running-the-project)
+
+---
+
 ## Architecture Overview
 
 ```mermaid
@@ -366,23 +394,26 @@ sequenceDiagram
 
 ```mermaid
 flowchart TB
-    LS[Login Screen\n3 tabs: Owner/Employee/Customer]
-    HS[Home Shell\nIndexedStack + NavBar]
+    MAIN["main.dart\nTechFixApp"]
+    LS["login_screen.dart\n3 tabs: Owner/Employee/Customer"]
+    HS["home_shell.dart\nIndexedStack + NavigationBar"]
 
-    LS -->|authenticate| HS
+    MAIN --> LS
+    LS -->|"authenticate(email, password)"| HS
+    HS -->|"signOut()"| LS
 
-    subgraph HS[Home Shell]
+    subgraph HS[HomeShell — role-filtered tabs]
         direction LR
-        CS[Customer Screen\nstatus_screen.dart]
-        TS[Technician Screen\ntechnician_screen.dart]
-        MS[Manager Screen\nmanager_screen.dart]
+        CS["CustomerStatusScreen\nindex 0 (Customer/Manager role)"]
+        TS["TechnicianScreen\nindex 1 (Employee/Manager role)"]
+        MS["ManagerScreen\nindex 2 (Owner/Manager role)"]
     end
 
-    CS -->|cancel job| TOAST[Toast]
-    TS -->|create/edit/log| DS[Dialogs & Sheets]
-    MS -->|add staff| AS[AddStaff Dialog]
+    CS -->|"cancelJob()"| TT["Toast"]
+    TS -->|"createJob / logPart / updateStatus"| DS["Dialogs & Sheets"]
+    MS -->|"addStaff()"| AD["AddStaffDialog"]
 
-    HS -->|sign out| LS
+    TT["Toast\nwidgets/toast.dart\nshowToast(context, msg, type)"]
 ```
 
 ### Role-Based Tab Visibility
@@ -392,93 +423,69 @@ flowchart TB
 | **Customer** | ✅ | — | — |
 | **Employee** (Technician) | — | ✅ | — |
 | **Owner** | — | — | ✅ |
-| **Manager** | ✅ | ✅ | ✅ |
+| **Manager** (Owner) | ✅ | ✅ | ✅ |
 
 ### Widget Hierarchy
 
 ```mermaid
 graph TB
-    subgraph "Shared Widgets (lib/widgets/)"
-        AB[AppBackground]
-        AV[Avatar]
-        ES[EmptyState]
-        ER[ErrorState]
-        FD[Field]
-        FC[FilterChipWidget]
-        JC[JobCard]
-        LS[LoadingState]
-        PL[Pill]
-        SH[SectionHeader]
-        ST[Sheet]
-        SC[StatCard]
-        SB[StatusBadge]
-        TD[TechFixDialog]
-        TT[Toast]
+    APP[TechFixApp] --> LS[LoginScreen]
+    LS --> HS[HomeShell]
+
+    HS --> CS[CustomerStatusScreen]
+    HS --> TS[TechnicianScreen]
+    HS --> MS[ManagerScreen]
+
+    TS --> SRD[StatusRadioDialog]
+    TS --> EDD[EditDescDialog]
+    TS --> CJS[CreateJobSheet]
+    TS --> LPS[LogPartSheet]
+
+    MS --> ASD[AddStaffDialog]
+    MS --> DP[DonutPainter]
+
+    SRD & EDD & ASD --> DIALOG[TechFixDialog]
+    CJS & LPS --> SHEET[Sheet]
+    LS & CJS & LPS & EDD & ASD --> FD[Field]
+    CS --> AV[Avatar] & PL[Pill] & SB[StatusBadge]
+
+    subgraph "Shared (15 widgets)"
+        AB[AppBackground] & ES[EmptyState] & ER[ErrorState]
+        FC[FilterChip] & JC[JobCard] & LD[LoadingState]
+        SC[StatCard] & SH[SectionHeader] & TT[Toast]
     end
 
-    subgraph "Screens"
-        subgraph "Technician Screen"
-            TS[technician_screen.dart]
-            SRD[status_radio_dialog.dart]
-            EDD[edit_desc_dialog.dart]
-            CJS[create_job_sheet.dart]
-            LPS[log_part_sheet.dart]
-        end
-        subgraph "Manager Screen"
-            MS[manager_screen.dart]
-            ASD[add_staff_dialog.dart]
-            DP[donut_painter.dart]
-        end
-        subgraph "Customer Screen"
-            CS[customer_status_screen.dart]
-        end
-    end
-
-    subgraph "Services & State"
-        API[TechFixApi]
-        AS[AppSession]
-        AS_SCOPE[AppSessionScope]
-    end
-
-    TS --> SRD & EDD & CJS & LPS
-    TS --> AB & FC & JC & LS & ES & ER & TT
-    MS --> AB & ASD & DP & JC & LS & ES & ER & TT & SH
-    CS --> AB & AV & PL & SB & SC & SH & LS & ES & ER & TT
-
-    SRD & EDD & ASD --> TD
-    CJS & LPS --> ST
-    CJS & LPS & EDD & ASD --> FD
-
-    TS & MS & CS --> API
-    TS & MS & CS --> AS_SCOPE
-    AS_SCOPE --> AS
-    API --> HTTP[HTTP Client]
+    LS & TS & MS & CS --> API[TechFixApi]
+    LS & TS & MS & CS --> SESSION[AppSession]
+    LS & TS & MS & CS --> UTIL[shared/utils]
 ```
 
 ### File Inventory
 
 | Directory | File | Lines | Responsibility |
 |-----------|------|-------|----------------|
+| **config/** | `api_config.dart` | 8 | `ApiConfig` — base URL constants |
 | **models/** | `repair_job.dart` | 69 | `RepairJob` data class with `fromApi()` factory |
 | | `inventory_usage.dart` | 33 | `InventoryUsage` data class |
-| **screens/** | `login_screen.dart` | 779 | 3-tab auth (Owner/Employee/Customer) |
-| | `home_shell.dart` | 106 | `IndexedStack` + `NavigationBar`, role-based routing |
-| | `customer_status_screen.dart` | 686 | Profile card, device list, job status tracking |
-| | `technician_screen.dart` | 470 | Job list with search/filter, FAB |
-| | `technician/status_radio_dialog.dart` | 99 | Radio selector for job status changes |
-| | `technician/edit_desc_dialog.dart` | 76 | Edit description + estimated cost |
-| | `technician/create_job_sheet.dart` | 306 | 3-step bottom sheet (Customer→Device→Issue) |
-| | `technician/log_part_sheet.dart` | 152 | Log inventory usage against a job |
-| | `manager_screen.dart` | 438 | Donut chart, revenue card, paginated jobs |
-| | `manager/add_staff_dialog.dart` | 109 | Add technician form dialog |
-| | `manager/donut_painter.dart` | 74 | `CustomPainter` donut chart + `LegendDot` |
-| **services/** | `techfix_api.dart` | 350 | REST client — all endpoint methods |
+| **screens/** | `login_screen.dart` | 779 | 3-tab auth (Owner Sign In/Up, Employee, Customer) |
+| | `home_shell.dart` | 106 | `IndexedStack` + `NavigationBar`, role-based tab filtering |
+| | `customer_status_screen.dart` | 686 | Profile card, device list, job status tracking, cancel |
+| | `technician_screen.dart` | 470 | Job list with search/filter, FAB for create/log |
+| | `technician/status_radio_dialog.dart` | 99 | Radio selector for job status transitions |
+| | `technician/edit_desc_dialog.dart` | 76 | Dialog — edit description + estimated cost |
+| | `technician/create_job_sheet.dart` | 306 | 3-step bottom sheet (Customer→Device→Issue + cost) |
+| | `technician/log_part_sheet.dart` | 152 | Bottom sheet — log inventory usage against a job |
+| | `manager_screen.dart` | 438 | Donut chart, revenue card, paginated jobs list |
+| | `manager/add_staff_dialog.dart` | 109 | Dialog — add technician (name, email, password) |
+| | `manager/donut_painter.dart` | 74 | `CustomPainter` donut chart + `LegendDot` widget |
+| **services/** | `techfix_api.dart` | 350 | REST client — all endpoint methods, auth headers |
 | **shared/** | `utils.dart` | 17 | `signOut()`, `fmtMoney()`, `emailRegex`, `minPasswordLength` |
-| **state/** | `app_session.dart` | 42 | `ChangeNotifier` — credentials, employee, `isOwner` |
-| | `app_session_scope.dart` | 16 | `InheritedNotifier` accessor |
-| **theme/** | `app_theme.dart` | 127 | Color tokens, `statusColor/Bg/Icon/Label`, `TextTheme` |
-| **widgets/** | 16 files | ~1,500 total | All reusable UI components |
-| **Total** | **33 files** | **~4,670** | |
+| **state/** | `app_session.dart` | 42 | `ChangeNotifier` — credentials, employee data, `isOwner` |
+| | `app_session_scope.dart` | 16 | `InheritedNotifier` — scoped access to `AppSession` |
+| **theme/** | `app_theme.dart` | 127 | Color tokens, status color helpers, `TextTheme` |
+| **widgets/** | 15 files | ~1,450 total | Reusable UI components (see Widget Hierarchy) |
+| **main.dart** | — | 39 | App entry point — creates `AppSession`, wraps in `AppSessionScope` |
+| **Total** | **34 files** | **~4,780** | |
 
 ### Design Tokens
 

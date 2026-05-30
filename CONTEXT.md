@@ -173,7 +173,14 @@ Status: IMPLEMENTED IN PHASE 2
 - **Shared utils**: Created `lib/shared/utils.dart` with `signOut(context)`, `fmtMoney()`, `emailRegex`, `minPasswordLength` — replaced 3 duplicate signOut blocks, 2 duplicate fmtMoney, and 3 inline email regexes.
 - **FilterChip**: Extracted private `_FilterChip` to `widgets/filter_chip.dart` as public `FilterChipWidget`.
 - **Login role check**: Added `requiredRole` parameter to `_authenticateAndGo`. Owner Sign In now verifies role is `'Owner'` — technician creds in Owner tab reject with `"Access denied: not a Owner account."` instead of silently logging into the wrong role.
+- **Database documentation**: Created `database/DATABASE_DOCUMENTATION.md` with ERD (Mermaid), EERD with disjoint specialization, status lifecycle state machine, full table specs (6 tables), stored procedure catalog (13 procedures + 1 function with usage matrix), trigger details, seed data walkthrough, call sequence diagrams, org-scope validation pattern flowchart, frontend↔DB mapping table, and key design decisions.
+
+## Recent Changes (2026-05-31)
+- Fixed Widget Hierarchy diagram in `DOCUMENTATION.md` — added main.dart, login_screen.dart, home_shell.dart, full app root, state/theme/services/utils/models subgraphs, accurate connections. Fixed file count (15 widgets, 34 total files).
+- Created `frontend/FRONTEND_DOCUMENTATION.md` — detailed 50+ section document covering all 34 files: app boot sequence, state management, navigation/routing, full screen-by-screen breakdown (5 main screens + 6 extracted modules), dialog/sheet extraction pattern, 15-widget reference gallery with usage matrix, API service layer with all endpoint methods, design tokens table, shared utilities, input validation guide, toast system, file inventory, key design decisions.
+- Updated all 4 AGENTS.md files (root, frontend, backend, database) with detailed architecture, conventions, and file references.
+- Updated all 4 CONTEXT.md files (root, frontend, backend, database) with current state, all Phase 5 changes, and documentation references.
 
 ## Final Summary
 
-Status: PHASE 4 COMPLETE — Phase 5 UX Polish in progress
+Status: PHASE 5 UX POLISH — Documentation complete, Phase 5 work ongoing

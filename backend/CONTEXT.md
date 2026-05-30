@@ -1,117 +1,65 @@
 # Backend Context
 
 ## Purpose
-
-Node.js + Express API that calls MySQL stored procedures/functions.
+Node.js + Express 5 API that calls MySQL stored procedures. No raw DML — all business logic stays in the database.
 
 ## Status
+Phase 2 endpoints implemented; Phase 3 integration complete; Phase 5 fixes deployed.
 
-Phase 2 endpoints implemented; Phase 3 integration complete.
-
-## Endpoints
-
-- POST /api/auth/employee
-- POST /api/auth/customer
-- POST /api/customers
-- GET /api/customers/:id
-- POST /api/devices
-- POST /api/repair-jobs
-- GET /api/repair-jobs
-- PUT /api/repair-jobs/:job_id
-- POST /api/inventory-usage
-- POST /api/employees/owner
-- POST /api/employees
-- PUT /api/repair-jobs/:job_id/description
-- POST /api/repair-jobs/:job_id/cancel
-- GET /api/customers/me
-
-## Live API Verification (2026-05-27)
-
-Auth used: HTTP Basic with seeded owner account.
-
-- POST /api/auth/employee
-  - How: `curl -u "owner@techfix.com:Owner123" -X POST http://localhost:3000/api/auth/employee`
-  - Expected: 200 + employee record
-  - Received: 200 + `{ employee_id: 1, organization_id: 1, role: "Owner", ... }`
-- GET /api/repair-jobs
-  - How: `curl -u "owner@techfix.com:Owner123" http://localhost:3000/api/repair-jobs`
-  - Expected: 200 + array of jobs
-  - Received: 200 + array (example includes `job_id: 1`, `status: "Pending"`, etc.)
-- GET /api/customers/1
-  - How: `curl -u "owner@techfix.com:Owner123" http://localhost:3000/api/customers/1`
-  - Expected: 200 + customer with devices/jobs/usage
-  - Received: 200 + `customer_id: 1` with devices + repair jobs + inventory usage arrays
-- POST /api/customers
-  - How: `curl -u "owner@techfix.com:Owner123" -H "Content-Type: application/json" -X POST http://localhost:3000/api/customers -d '{"organization_id":1,"name":"Live Test Customer","phone":"0300...","email":"live_...@example.com"}'`
-  - Expected: 201 + new customer id
-  - Received: 201 + `{ customer_id: 7 }`
-- POST /api/devices
-  - How: `curl -u "owner@techfix.com:Owner123" -H "Content-Type: application/json" -X POST http://localhost:3000/api/devices -d '{"customer_id":1,"type":"Laptop","brand":"Dell","model":"Inspiron 15","serial_number":"LIVE-..."}'`
-  - Expected: 201 + new device id
-  - Received: 201 + `{ device_id: 10 }`
-- POST /api/repair-jobs
-  - How: `curl -u "owner@techfix.com:Owner123" -H "Content-Type: application/json" -X POST http://localhost:3000/api/repair-jobs -d '{"device_id":1,"description":"Live test job","estimated_cost":1234,"status":"Pending"}'`
-  - Expected: 201 + new job id
-  - Received: 201 + `{ job_id: 12 }`
-- POST /api/inventory-usage
-  - How: `curl -u "owner@techfix.com:Owner123" -H "Content-Type: application/json" -X POST http://localhost:3000/api/inventory-usage -d '{"job_id":1,"part_name":"Live Part","part_cost":999}'`
-  - Expected: 201 + new usage id
-  - Received: 201 + `{ usage_id: 9 }`
-- PUT /api/repair-jobs/:job_id
-  - How: `curl -u "owner@techfix.com:Owner123" -H "Content-Type: application/json" -X PUT http://localhost:3000/api/repair-jobs/12 -d '{"status":"Ready"}'`
-  - Expected: 200 + rows affected
-  - Received: 200 + `{ rows_affected: 1 }`
-
-- POST /api/employees/owner
-  - How: `curl -H "Content-Type: application/json" -X POST http://localhost:3000/api/employees/owner -d '{"organization_name":"Shop A","owner_name":"Alice","owner_email":"alice@shopa.com","password":"Owner123"}'`
-  - Expected: 201 + `{ organization_id, owner_employee_id }` (org + owner created)
-  - Received: 201 + `{ organization_id: 14, owner_employee_id: 15 }`
-
-- POST /api/employees
-  - How: `curl -u "owner@shopa.com:Owner123" -H "Content-Type: application/json" -X POST http://localhost:3000/api/employees -d '{"name":"Bob","email":"bob@shopa.com","password":"Tech123"}'`
-  - Expected: 201 + new employee id
-  - Received: 201 + `{ employee_id: 16 }`
-
-- PUT /api/repair-jobs/:job_id/description
-  - How: `curl -u "tech@example.com:Tech123" -H "Content-Type: application/json" -X PUT http://localhost:3000/api/repair-jobs/12/description -d '{"description":"Updated description"}'`
-  - Expected: 200 + `{ rows_affected: 1 }`
-  - Received: 200 + `{ rows_affected: 1 }`
-
-- POST /api/repair-jobs/:job_id/cancel
-  - How: `curl -u "customer@example.com:" -X POST http://localhost:3000/api/repair-jobs/12/cancel`
-  - Expected: 200 + `{ rows_affected: 1 }` when the job is `Pending`
-  - Received: 200 + `{ rows_affected: 1 }`
-
-- GET /api/customers/me
-  - How: `curl -u "customer@example.com:" http://localhost:3000/api/customers/me`
-  - Expected: 200 + customer object with `devices`, `repair_jobs` and `inventory_usage` result sets
-  - Received: 200 + `{ customer: { customer_id: 7, name: "Live Test Customer", email: "live_...@example.com" }, devices: [...], repair_jobs: [...], inventory_usage: [...] }`
-
-## Testing
-
-- Unit tests: `npm test`
-- Integration tests (real DB): `npm run test:db`
-- Integration tests require `.env` with DB credentials and seeded data.
-
-### Unit test results (2026-05-28)
-
-- `npm test` — **24 passed, 0 failed, 1 skipped** (includes one DB integration test skipped).
-
-## Database Notes
-
-- If you see collation mismatch errors, run database/techfix_routines_patch.sql.
-- This patch updates login and customer lookup routines to align collations.
+## Structure
+```
+backend/src/
+├── app.js              # Express app factory (DI for pool)
+├── server.js           # Entry point
+├── routes/             # 6 route files (auth, employees, customers, devices, repairJobs, inventoryUsage)
+├── controllers/        # 6 controller files
+├── middleware/
+│   ├── auth.js         # employeeAuth + customerAuth middleware (Basic Auth)
+│   └── errorHandler.js # Global error handler
+├── db/
+│   ├── pool.js         # mysql2/promise connection pool
+│   └── callProcedure.js # CALL sp_name() helper (single + multi result sets)
+└── utils/
+    ├── auth.js         # SHA256 hashing, Basic Auth parser
+    └── validation.js   # Required fields, parse int/float helpers
+```
 
 ## Auth
+- Employee endpoints: `employeeAuth` middleware calls `sp_employee_login`, binds to `req.employee`
+- Customer endpoints: `customerAuth` middleware calls `sp_customer_login`, binds to `req.customer`
+- Role filtering: `employeeAuth` accepts optional `roles` array (e.g., `roles: ['Owner']`)
+- Public: `POST /api/employees/owner`, `POST /api/auth/*`
 
-- Employee endpoints require HTTP Basic auth (email:password).
-- Customer auth uses HTTP Basic auth (email only).
-- Protected endpoints bind actions to the authenticated employee context.
+## Endpoints (14 total)
 
-## Notes
+| Method | Route | Auth | Access | Procedure(s) |
+|--------|-------|------|--------|-------------|
+| POST | `/api/auth/employee` | Basic | Public | `sp_employee_login` |
+| POST | `/api/auth/customer` | Basic | Public | `sp_customer_login` |
+| POST | `/api/employees/owner` | — | Public | `sp_create_owner` |
+| POST | `/api/employees` | Employee | Owner | `sp_create_employee` |
+| POST | `/api/customers` | Employee | All | `sp_create_customer` |
+| GET | `/api/customers/:id` | Employee | All | `sp_get_customer_full_for_employee` |
+| GET | `/api/customers/me` | Customer | — | `sp_get_customer_full_for_customer` |
+| POST | `/api/devices` | Employee | All | `sp_create_device` |
+| GET | `/api/repair-jobs` | Employee | All | `sp_get_repair_jobs` (3 params) |
+| POST | `/api/repair-jobs` | Employee | All | `sp_create_repair_job` |
+| PUT | `/api/repair-jobs/:job_id` | Employee | All | `sp_update_repair_job_status` |
+| PUT | `/api/repair-jobs/:id/description` | Employee | All | `sp_update_repair_job_description` |
+| POST | `/api/repair-jobs/:id/cancel` | Customer | — | `sp_cancel_repair_job_by_customer` |
+| POST | `/api/inventory-usage` | Employee | All | `sp_log_inventory_usage` |
 
-- Backend must validate input before calling stored routines.
-- No direct SQL table access from code.
-- Basic auth for Owner/Employee/Customer is implemented.
-- Fine-grained access control rules still need approval.
-- sp_get_repair_jobs now accepts optional 3rd p_org_id param: org-wide view when provided (manager), personal view when null (technician).
+## Testing
+- Unit tests: `npm test` — 24 passed, 0 failed, 1 skipped
+- Integration tests (real DB): `npm run test:db` — requires `.env` with seeded DB
+- Test framework: `node:test` + `supertest` with mocked stored procedures (stub helper replaces `callProcedure`)
+
+## Key Fixes (Phase 5)
+- `getRepairJobs` 500 error: always passes 3 params `[employeeId, status, organizationId]`
+- Status update 400 error: normalizes status to PascalCase before WRITE_STATUSES check
+- `sp_get_customer_full_*` LEFT JOIN employees for `employee_name` in usage results
+
+## DB Conn Details
+- `.env` required: `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
+- If collation mismatch: run `database/techfix_routines_patch.sql`
+- `callProcedure.js` uses `pool.query` (not `pool.execute`) — prepared statements have issues with `CALL` multi-result-sets
