@@ -46,23 +46,23 @@ Confirmed entities:
 
 Status: IMPLEMENTED IN PHASE 2
 
-| Method | Route                    | Purpose                                     | Status  |
-| ------ | ------------------------ | ------------------------------------------- | ------- |
-| POST   | /api/auth/employee       | Employee login via basic auth               | ✅ DONE |
-| POST   | /api/auth/customer       | Customer login via basic auth               | ✅ DONE |
-| POST   | /api/organizations       | Create organization (owner setup)           | ✅ DONE |
-| POST   | /api/employees/owner     | Create owner + organization (initial setup) | ✅ DONE |
-| POST   | /api/employees           | Create employee (owner-protected)           | ✅ DONE |
-| POST   | /api/customers           | Register a new customer                     | ✅ DONE |
-| GET    | /api/customers/:id       | Fetch customer with all associated devices  | ✅ DONE |
-| GET    | /api/customers/me        | Get authenticated customer's own data       | ✅ DONE |
-| POST   | /api/devices             | Check in a device for repair                | ✅ DONE |
-| POST   | /api/repair-jobs         | Create a repair job                         | ✅ DONE |
-| GET    | /api/repair-jobs         | Fetch all repair jobs with status filtering | ✅ DONE |
-| PUT    | /api/repair-jobs/:job_id | Update job status                           | ✅ DONE |
-| PUT    | /api/repair-jobs/:id/description | Update job description                | ✅ DONE |
-| POST   | /api/repair-jobs/:id/cancel | Customer cancels pending job            | ✅ DONE |
-| POST   | /api/inventory-usage     | Log parts used in a repair                  | ✅ DONE |
+| Method | Route                            | Purpose                                     | Status  |
+| ------ | -------------------------------- | ------------------------------------------- | ------- |
+| POST   | /api/auth/employee               | Employee login via basic auth               | ✅ DONE |
+| POST   | /api/auth/customer               | Customer login via basic auth               | ✅ DONE |
+| POST   | /api/organizations               | Create organization (owner setup)           | ✅ DONE |
+| POST   | /api/employees/owner             | Create owner + organization (initial setup) | ✅ DONE |
+| POST   | /api/employees                   | Create employee (owner-protected)           | ✅ DONE |
+| POST   | /api/customers                   | Register a new customer                     | ✅ DONE |
+| GET    | /api/customers/:id               | Fetch customer with all associated devices  | ✅ DONE |
+| GET    | /api/customers/me                | Get authenticated customer's own data       | ✅ DONE |
+| POST   | /api/devices                     | Check in a device for repair                | ✅ DONE |
+| POST   | /api/repair-jobs                 | Create a repair job                         | ✅ DONE |
+| GET    | /api/repair-jobs                 | Fetch all repair jobs with status filtering | ✅ DONE |
+| PUT    | /api/repair-jobs/:job_id         | Update job status                           | ✅ DONE |
+| PUT    | /api/repair-jobs/:id/description | Update job description                      | ✅ DONE |
+| POST   | /api/repair-jobs/:id/cancel      | Customer cancels pending job                | ✅ DONE |
+| POST   | /api/inventory-usage             | Log parts used in a repair                  | ✅ DONE |
 
 ## Phase Tracker
 
