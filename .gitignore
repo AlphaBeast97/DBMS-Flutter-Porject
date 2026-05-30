@@ -17,6 +17,9 @@ logs/
 .env
 .env.*
 
+# But keep .env.example as template reference
+!.env.example
+
 # Dependency directories
 node_modules/
 vendor/

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:techfix/config/api_config.dart';
 import 'package:techfix/screens/login_screen.dart';
 import 'package:techfix/state/app_session.dart';
 import 'package:techfix/state/app_session_scope.dart';
 import 'package:techfix/theme/app_theme.dart';
 
-void main() {
+Future<void> main() async {
+  await dotenv.load(fileName: '.env');
   runApp(const TechFixApp());
 }
 
@@ -22,7 +24,7 @@ class _TechFixAppState extends State<TechFixApp> {
   @override
   void initState() {
     super.initState();
-    _session = AppSession(baseUrl: ApiConfig.chromeBaseUrl);
+    _session = AppSession(baseUrl: ApiConfig.baseUrl);
   }
 
   @override

@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:techfix/config/api_config.dart';
 import 'package:techfix/screens/home_shell.dart';
@@ -55,7 +54,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _employeeFormKey = GlobalKey<FormState>();
   final _customerFormKey = GlobalKey<FormState>();
 
-  late final TextEditingController _baseUrlController;
   final _ownerEmailController = TextEditingController();
   final _ownerPasswordController = TextEditingController();
   final _orgNameController = TextEditingController();
@@ -71,14 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
   OwnerMode _ownerMode = OwnerMode.signIn;
 
   @override
-  void initState() {
-    super.initState();
-    _baseUrlController = TextEditingController(text: _defaultBaseUrl());
-  }
-
-  @override
   void dispose() {
-    _baseUrlController.dispose();
     _ownerEmailController.dispose();
     _ownerPasswordController.dispose();
     _orgNameController.dispose();
@@ -89,13 +80,6 @@ class _LoginScreenState extends State<LoginScreen> {
     _employeePasswordController.dispose();
     _customerEmailController.dispose();
     super.dispose();
-  }
-
-  String _defaultBaseUrl() {
-    if (kIsWeb) {
-      return ApiConfig.chromeBaseUrl;
-    }
-    return ApiConfig.androidDeviceBaseUrl;
   }
 
   bool _isValidEmail(String v) => RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(v);
@@ -110,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _authenticateAndGo(String email, String password, {String? requiredRole}) async {
     final session = AppSessionScope.of(context);
-    final baseUrl = _baseUrlController.text.trim();
+    final baseUrl = ApiConfig.baseUrl;
 
     final api = TechFixApi(baseUrl: baseUrl, email: email, password: password);
     final employee = await api.authenticateEmployee();
@@ -121,7 +105,6 @@ class _LoginScreenState extends State<LoginScreen> {
         throw Exception('Access denied: not a $requiredRole account.');
       }
     }
-
     session.updateCredentials(baseUrl: baseUrl, email: email, password: password);
     session.setEmployee(employee);
 
@@ -180,13 +163,12 @@ class _LoginScreenState extends State<LoginScreen> {
       _isSubmitting = true;
     });
 
-    final baseUrl = _baseUrlController.text.trim();
     final orgName = _orgNameController.text.trim();
     final ownerName = _ownerNameController.text.trim();
     final password = _ownerSignUpPasswordController.text;
 
     try {
-      final api = TechFixApi(baseUrl: baseUrl, email: email, password: password);
+      final api = TechFixApi(baseUrl: ApiConfig.baseUrl, email: email, password: password);
       await api.createOwner(
         organizationName: orgName,
         ownerName: ownerName,
@@ -240,14 +222,13 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     final session = AppSessionScope.of(context);
-    final baseUrl = _baseUrlController.text.trim();
 
     try {
-      final api = TechFixApi(baseUrl: baseUrl, email: email, password: '');
+      final api = TechFixApi(baseUrl: ApiConfig.baseUrl, email: email, password: '');
       await api.authenticateCustomer(email);
       final customerData = await api.getCustomerMe();
 
-      session.updateCredentials(baseUrl: baseUrl, email: email, password: '');
+      session.updateCredentials(baseUrl: ApiConfig.baseUrl, email: email, password: '');
       final customer = {...customerData, 'role': 'Customer'};
       session.setEmployee(customer);
 
@@ -446,17 +427,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                      ],
-
-                      // Base URL field
-                      if (_authMode == AuthMode.owner) ...[
-                        Field(
-                          label: 'API Base URL',
-                          value: _baseUrlController.text,
-                          onChanged: (v) => _baseUrlController.text = v,
-                          icon: Icons.link,
-                        ),
-                        const SizedBox(height: 12),
                       ],
 
                       // Owner Sign In

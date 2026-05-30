@@ -1,5 +1,6 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class ApiConfig {
-  static const String chromeBaseUrl = 'http://100.89.105.17:3000';
-  static const String androidEmulatorBaseUrl = 'http://100.89.105.17:3000';
-  static const String androidDeviceBaseUrl = 'http://100.89.105.17:3000';
+  static String get baseUrl =>
+      dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000';
 }
