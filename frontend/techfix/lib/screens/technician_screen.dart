@@ -6,7 +6,6 @@ import 'package:techfix/state/app_session_scope.dart';
 import 'package:techfix/widgets/app_background.dart';
 import 'package:techfix/widgets/job_card.dart';
 import 'package:techfix/widgets/section_header.dart';
-import 'package:techfix/widgets/stat_card.dart';
 
 class TechnicianScreen extends StatefulWidget {
   const TechnicianScreen({super.key});
@@ -21,6 +20,13 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
   @override
   void initState() {
     super.initState();
+    // Don't load data here - wait for didChangeDependencies
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Safe to access AppSessionScope here, after InheritedWidget is built
     _jobsFuture = _loadJobs();
   }
 
@@ -134,59 +140,6 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
         const SizedBox(height: 4),
         Text(value, style: const TextStyle(fontSize: 16)),
       ],
-    );
-  }
-
-  /// Show statistics dialog
-  void _showStatisticsDialog(List<RepairJob> jobs) {
-    final session = AppSessionScope.of(context);
-    final currentEmployeeId = session.employee?['employee_id'] as int?;
-
-    // Filter jobs to only those created by this employee
-    final myJobs = currentEmployeeId != null
-        ? jobs.where((j) => j.createdByEmployeeId == currentEmployeeId).toList()
-        : jobs;
-
-    final total = myJobs.length;
-    final pending = myJobs
-        .where((j) => j.status.toLowerCase() == 'pending')
-        .length;
-    final repairing = myJobs
-        .where((j) => j.status.toLowerCase() == 'repairing')
-        .length;
-    final ready = myJobs.where((j) => j.status.toLowerCase() == 'ready').length;
-    final delivered = myJobs
-        .where((j) => j.status.toLowerCase() == 'delivered')
-        .length;
-    final cancelled = myJobs
-        .where((j) => j.status.toLowerCase() == 'cancelled')
-        .length;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Your Statistics'),
-        content: SingleChildScrollView(
-          child: Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              StatCard(label: 'Total jobs', value: total.toString()),
-              StatCard(label: 'Pending', value: pending.toString()),
-              StatCard(label: 'Repairing', value: repairing.toString()),
-              StatCard(label: 'Ready', value: ready.toString()),
-              StatCard(label: 'Delivered', value: delivered.toString()),
-              StatCard(label: 'Cancelled', value: cancelled.toString()),
-            ],
-          ),
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -605,26 +558,6 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
                   icon: const Icon(Icons.inventory_2_outlined),
                   label: const Text('Log part'),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const SectionHeader(title: 'Your Statistics'),
-              FutureBuilder<List<RepairJob>>(
-                future: _jobsFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return ElevatedButton.icon(
-                      onPressed: () => _showStatisticsDialog(snapshot.data!),
-                      icon: const Icon(Icons.bar_chart_outlined),
-                      label: const Text('View'),
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
               ),
             ],
           ),
