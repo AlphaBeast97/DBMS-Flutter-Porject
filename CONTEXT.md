@@ -48,15 +48,21 @@ Status: IMPLEMENTED IN PHASE 2
 
 | Method | Route                    | Purpose                                     | Status  |
 | ------ | ------------------------ | ------------------------------------------- | ------- |
-| POST   | /api/customers           | Register a new customer                     | ✅ DONE |
-| POST   | /api/devices             | Check in a device for repair                | ✅ DONE |
-| POST   | /api/repair-jobs         | Create a repair job                         | ✅ DONE |
 | POST   | /api/auth/employee       | Employee login via basic auth               | ✅ DONE |
 | POST   | /api/auth/customer       | Customer login via basic auth               | ✅ DONE |
-| GET    | /api/repair-jobs         | Fetch all repair jobs with status filtering | ✅ DONE |
-| PUT    | /api/repair-jobs/:job_id | Update job status or final cost             | ✅ DONE |
-| POST   | /api/inventory-usage     | Log parts used in a repair                  | ✅ DONE |
+| POST   | /api/organizations       | Create organization (owner setup)           | ✅ DONE |
+| POST   | /api/employees/owner     | Create owner + organization (initial setup) | ✅ DONE |
+| POST   | /api/employees           | Create employee (owner-protected)           | ✅ DONE |
+| POST   | /api/customers           | Register a new customer                     | ✅ DONE |
 | GET    | /api/customers/:id       | Fetch customer with all associated devices  | ✅ DONE |
+| GET    | /api/customers/me        | Get authenticated customer's own data       | ✅ DONE |
+| POST   | /api/devices             | Check in a device for repair                | ✅ DONE |
+| POST   | /api/repair-jobs         | Create a repair job                         | ✅ DONE |
+| GET    | /api/repair-jobs         | Fetch all repair jobs with status filtering | ✅ DONE |
+| PUT    | /api/repair-jobs/:job_id | Update job status                           | ✅ DONE |
+| PUT    | /api/repair-jobs/:id/description | Update job description                | ✅ DONE |
+| POST   | /api/repair-jobs/:id/cancel | Customer cancels pending job            | ✅ DONE |
+| POST   | /api/inventory-usage     | Log parts used in a repair                  | ✅ DONE |
 
 ## Phase Tracker
 
@@ -108,13 +114,18 @@ Status: IMPLEMENTED IN PHASE 2
 - Auth endpoints added for employees and customers using Basic auth headers.
 - Input validation helpers added for required fields and numeric parsing.
 - Tests added with Node test runner + supertest, plus optional real DB integration test (RUN_DB_TESTS=1).
-- Access control (Owner/Employee/Customer) remains TODO after endpoints.
+- Access control middleware added (Owner/Employee/Customer roles).
+- Organizations and employees management endpoints added.
+- Additional endpoints for job description updates and customer cancellations.
 
 ### Phase 3
 
 - Flutter app scaffolded with themed UI and home shell.
 - Screens added for customer status, technician console, and manager overview.
 - UI uses mock data/models; no API integration yet.
+- TechFixApi service layer added with full endpoint coverage (auth, CRUD, updates).
+- AppSession state management added for authentication and credentials.
+- Middleware/auth decorators added for route protection.
 
 ### Phase 4
 
@@ -122,4 +133,4 @@ Status: IMPLEMENTED IN PHASE 2
 
 ## Final Summary
 
-Status: PHASE 3 STARTED (frontend UI scaffold, API integration pending)
+Status: PHASE 3 IN PROGRESS (API integration layer added, UI wiring pending)

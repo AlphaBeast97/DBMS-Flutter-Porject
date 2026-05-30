@@ -8,6 +8,7 @@ class JobCard extends StatelessWidget {
   final String? customerNameOverride;
   final String? deviceLabelOverride;
   final VoidCallback? onCancel;
+  final VoidCallback? onEdit;
 
   const JobCard({
     super.key,
@@ -16,6 +17,7 @@ class JobCard extends StatelessWidget {
     this.customerNameOverride,
     this.deviceLabelOverride,
     this.onCancel,
+    this.onEdit,
   });
 
   @override
@@ -43,22 +45,35 @@ class JobCard extends StatelessWidget {
                             ?.copyWith(fontWeight: FontWeight.w600),
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        job.status,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: statusColor,
-                          fontWeight: FontWeight.w600,
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            job.status,
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: statusColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
                         ),
-                      ),
+                        if (onEdit != null) ...[
+                          const SizedBox(width: 8),
+                          IconButton(
+                            onPressed: onEdit,
+                            icon: const Icon(Icons.edit_outlined),
+                            tooltip: 'Edit description',
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),

@@ -225,6 +225,73 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
     );
   }
 
+  /// Show dialog to edit the job description
+  void _showEditDescriptionDialog(RepairJob job) {
+    String description = job.description;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text('Edit description - Job #${job.id}'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                initialValue: description,
+                maxLines: 4,
+                onChanged: (v) => setState(() => description = v),
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                try {
+                  final session = AppSessionScope.of(context);
+                  final api = TechFixApi(
+                    baseUrl: session.baseUrl,
+                    email: session.email,
+                    password: session.password,
+                  );
+
+                  await api.updateJobDescription(
+                    jobId: job.id,
+                    description: description.trim(),
+                  );
+
+                  if (!mounted) return;
+                  Navigator.pop(context);
+                  _refresh();
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Description updated')),
+                  );
+                } catch (error) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error: $error'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// Show dialog to create a new repair job
   void _showCreateJobDialog() {
     final deviceIdController = TextEditingController();
@@ -619,6 +686,7 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
                       (job) => JobCard(
                         job: job,
                         onTap: () => _showUpdateStatusDialog(job),
+                        onEdit: () => _showEditDescriptionDialog(job),
                       ),
                     )
                     .toList(),
