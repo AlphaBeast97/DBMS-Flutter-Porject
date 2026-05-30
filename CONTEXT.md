@@ -68,7 +68,7 @@ Status: IMPLEMENTED IN PHASE 2
 - [x] Phase 0: Project Setup & Context File
 - [x] Phase 1: MySQL Schema & Seeding
 - [x] Phase 2: Express API
-- [ ] Phase 3: Flutter UI & API Integration (started: UI scaffold only)
+- [x] Phase 3: Flutter UI & API Integration (completed)
 - [ ] Phase 4: Polish & Basic Error Handling
 
 ## Decisions Log
@@ -76,6 +76,8 @@ Status: IMPLEMENTED IN PHASE 2
 - All data operations use stored procedures/functions in MySQL; backend calls routines only.
 - Added root and per-part AGENTS.md + CONTEXT.md (backend, database, frontend).
 - Introduced organizations and employees with role-based access; customers can cancel only when status is Pending.
+- sp_get_repair_jobs accepts optional 3rd p_org_id param: when provided returns org-wide jobs (manager view), when null filters by created_by_employee_id (technician view).
+- Frontend TechFixApi.getRepairJobs() accepts optional organizationId to support the manager dashboard.
 
 ## Blockers
 
@@ -121,10 +123,13 @@ Status: IMPLEMENTED IN PHASE 2
 
 - Flutter app scaffolded with themed UI and home shell.
 - Screens added for customer status, technician console, and manager overview.
-- UI uses mock data/models; no API integration yet.
 - TechFixApi service layer added with full endpoint coverage (auth, CRUD, updates).
 - AppSession state management added for authentication and credentials.
-- Middleware/auth decorators added for route protection.
+- All screens wired to real API endpoints (no mock data in use).
+- Fixed sp_get_repair_jobs to filter by created_by_employee_id for technicians.
+- Added p_org_id param to sp_get_repair_jobs for org-wide manager dashboard view.
+- Manager screen passes organization_id to API to fetch all jobs for dashboard.
+- Mock data file preserved but unused.
 
 ### Phase 4
 
@@ -132,4 +137,4 @@ Status: IMPLEMENTED IN PHASE 2
 
 ## Final Summary
 
-Status: PHASE 3 IN PROGRESS (API integration layer added, UI wiring pending)
+Status: PHASE 3 COMPLETE (Flutter UI fully integrated with backend API)

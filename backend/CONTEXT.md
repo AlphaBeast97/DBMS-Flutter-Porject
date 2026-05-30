@@ -6,7 +6,7 @@ Node.js + Express API that calls MySQL stored procedures/functions.
 
 ## Status
 
-Phase 2 endpoints implemented; access control pending.
+Phase 2 endpoints implemented; Phase 3 integration complete.
 
 ## Endpoints
 
@@ -114,3 +114,4 @@ Auth used: HTTP Basic with seeded owner account.
 - No direct SQL table access from code.
 - Basic auth for Owner/Employee/Customer is implemented.
 - Fine-grained access control rules still need approval.
+- sp_get_repair_jobs now accepts optional 3rd p_org_id param: org-wide view when provided (manager), personal view when null (technician).
