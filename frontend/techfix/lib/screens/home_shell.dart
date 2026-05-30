@@ -20,21 +20,13 @@ class _HomeShellState extends State<HomeShell> {
       screen: CustomerStatusScreen(),
       icon: Icons.receipt_long,
       label: 'Customer',
-      roles: [
-        'Customer',
-        'Owner',
-        'Manager',
-      ], // Accessible by Customer, Owner, Manager
+      roles: ['Customer', 'Manager'], // Accessible by Customer, Manager
     ),
     _NavItem(
       screen: TechnicianScreen(),
       icon: Icons.build_circle_outlined,
       label: 'Technician',
-      roles: [
-        'Employee',
-        'Owner',
-        'Manager',
-      ], // Accessible by Employee, Owner, Manager
+      roles: ['Employee', 'Manager'], // Accessible by Employee, Manager
     ),
     _NavItem(
       screen: ManagerScreen(),

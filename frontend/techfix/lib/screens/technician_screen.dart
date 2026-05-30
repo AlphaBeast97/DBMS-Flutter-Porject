@@ -769,32 +769,24 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
             ],
           ),
           const SizedBox(height: 24),
-          Builder(
-            builder: (context) {
-              final session = AppSessionScope.of(context);
-              final role = (session.employee?['role'] ?? '').toString();
-              final isOwner = role == 'Owner';
-
-              return Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: isOwner ? null : _showCreateJobDialog,
-                      icon: const Icon(Icons.add_circle_outline),
-                      label: const Text('Create job'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: isOwner ? null : _showLogPartDialog,
-                      icon: const Icon(Icons.inventory_2_outlined),
-                      label: const Text('Log part'),
-                    ),
-                  ),
-                ],
-              );
-            },
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _showCreateJobDialog,
+                  icon: const Icon(Icons.add_circle_outline),
+                  label: const Text('Create job'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _showLogPartDialog,
+                  icon: const Icon(Icons.inventory_2_outlined),
+                  label: const Text('Log part'),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 24),
           SectionHeader(
@@ -862,20 +854,14 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
               final allJobs = snapshot.data!.toList()
                 ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-              final session = AppSessionScope.of(context);
-              final role = (session.employee?['role'] ?? '').toString();
-
               // Technicians see only Pending and Repairing jobs (active queue)
-              // Owner sees all jobs
-              final filteredByRole = role == 'Owner'
-                  ? allJobs
-                  : allJobs
-                        .where(
-                          (job) =>
-                              job.status.toLowerCase() == 'pending' ||
-                              job.status.toLowerCase() == 'repairing',
-                        )
-                        .toList();
+              final filteredByRole = allJobs
+                  .where(
+                    (job) =>
+                        job.status.toLowerCase() == 'pending' ||
+                        job.status.toLowerCase() == 'repairing',
+                  )
+                  .toList();
 
               // Apply search filter if present. Run only when user hits search.
               final queryRaw = _searchQuery.trim();
@@ -935,22 +921,14 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
                 future: usagesFuture,
                 builder: (context, usagesSnap) {
                   final usagesMap = usagesSnap.data ?? {};
-                  final session = AppSessionScope.of(context);
-                  final role = (session.employee?['role'] ?? '').toString();
-                  final isOwner = role == 'Owner';
-
                   return Column(
                     children: [
                       ...displayedJobs.map((job) {
                         final usages = usagesMap[job.id] ?? [];
                         return JobCard(
                           job: job,
-                          onTap: isOwner
-                              ? null
-                              : () => _showUpdateStatusDialog(job),
-                          onEdit: isOwner
-                              ? null
-                              : () => _showEditDescriptionDialog(job),
+                          onTap: () => _showUpdateStatusDialog(job),
+                          onEdit: () => _showEditDescriptionDialog(job),
                           usages: usages,
                         );
                       }).toList(),
