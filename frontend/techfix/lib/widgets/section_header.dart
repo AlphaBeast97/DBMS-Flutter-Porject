@@ -27,7 +27,6 @@ class SectionHeader extends StatelessWidget {
             Text(
               title,
               style: const TextStyle(
-                fontFamily: 'Space Grotesk',
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
                 color: AppTheme.ink,
@@ -39,8 +38,7 @@ class SectionHeader extends StatelessWidget {
               Text(
                 '$count',
                 style: const TextStyle(
-                  fontFamily: 'Space Grotesk',
-                  fontSize: 13,
+                                    fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: AppTheme.faint,
                 ),
@@ -64,8 +62,7 @@ class SectionHeader extends StatelessWidget {
                 Text(
                   actionLabel!,
                   style: const TextStyle(
-                    fontFamily: 'Space Grotesk',
-                    fontSize: 14,
+                                        fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: AppTheme.coral,
                   ),

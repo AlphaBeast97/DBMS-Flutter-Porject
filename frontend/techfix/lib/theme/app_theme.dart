@@ -29,7 +29,6 @@ class AppTheme {
         primary: coral,
         secondary: teal,
         surface: cream,
-        background: cream,
         onPrimary: Colors.white,
         onSecondary: Colors.white,
         onSurface: ink,

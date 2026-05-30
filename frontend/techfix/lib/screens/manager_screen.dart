@@ -12,6 +12,7 @@ import 'package:techfix/widgets/field.dart';
 import 'package:techfix/widgets/loading_state.dart';
 import 'package:techfix/widgets/job_card.dart';
 import 'package:techfix/widgets/section_header.dart';
+import 'package:techfix/widgets/techfix_dialog.dart';
 import 'package:techfix/widgets/toast.dart';
 
 // ─────────────────────────────────────────────────────────────
@@ -94,129 +95,73 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: GestureDetector(
-        onTap: widget.onClose,
-        child: Container(
-          color: const Color(0x6B141414),
-          child: Center(
-            child: GestureDetector(
-              onTap: () {},
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 22),
-                width: double.infinity,
-                constraints: const BoxConstraints(maxWidth: 340, maxHeight: 460),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(26),
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: Padding(
-                    padding: const EdgeInsets.all(22),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: AppTheme.coral.withOpacity(0.14),
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: const Icon(Icons.person_add, size: 26, color: AppTheme.coral),
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Add technician',
-                          style: TextStyle(
-                            
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.ink,
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        Field(
-                          label: 'Full name',
-                          icon: Icons.badge,
-                          value: _nameCtl.text,
-                          onChanged: (v) { _nameCtl.text = v; setState(() {}); },
-                          autoFocus: true,
-                        ),
-                        const SizedBox(height: 12),
-                        Field(
-                          label: 'Work email',
-                          icon: Icons.mail,
-                          value: _emailCtl.text,
-                          onChanged: (v) { _emailCtl.text = v; setState(() {}); },
-                          keyboardType: TextInputType.emailAddress,
-                        ),
-                        const SizedBox(height: 12),
-                        Field(
-                          label: 'Password',
-                          icon: Icons.lock,
-                          value: _pwCtl.text,
-                          onChanged: (v) { _pwCtl.text = v; setState(() {}); },
-                          obscureText: true,
-                        ),
-                        const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: AppTheme.teal.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Row(
-                            children: [
-                              Icon(Icons.engineering, size: 17, color: AppTheme.teal),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Added as a Technician with their own job console.',
-                                  style: TextStyle(
-                                    
-                                    fontSize: 12,
-                                    color: AppTheme.muted,
-                                    height: 1.4,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            TextButton(
-                              onPressed: widget.onClose,
-                              child: const Text('Cancel'),
-                            ),
-                            const SizedBox(width: 8),
-                            FilledButton(
-                              onPressed: _valid
-                                  ? () => widget.onAdd({
-                                        'name': _nameCtl.text,
-                                        'email': _emailCtl.text,
-                                        'password': _pwCtl.text,
-                                      })
-                                  : null,
-                              child: const Text('Add'),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+    return TechFixDialog(
+      icon: Icons.person_add,
+      iconColor: AppTheme.coral,
+      title: 'Add technician',
+      onClose: widget.onClose,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Field(
+            label: 'Full name',
+            icon: Icons.badge,
+            value: _nameCtl.text,
+            onChanged: (v) { _nameCtl.text = v; setState(() {}); },
+            autoFocus: true,
+          ),
+          const SizedBox(height: 12),
+          Field(
+            label: 'Work email',
+            icon: Icons.mail,
+            value: _emailCtl.text,
+            onChanged: (v) { _emailCtl.text = v; setState(() {}); },
+            keyboardType: TextInputType.emailAddress,
+          ),
+          const SizedBox(height: 12),
+          Field(
+            label: 'Password',
+            icon: Icons.lock,
+            value: _pwCtl.text,
+            onChanged: (v) { _pwCtl.text = v; setState(() {}); },
+            obscureText: true,
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppTheme.teal.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.engineering, size: 17, color: AppTheme.teal),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Added as a Technician with their own job console.',
+                    style: TextStyle(fontSize: 12, color: AppTheme.muted, height: 1.4),
                   ),
                 ),
-              ),
+              ],
             ),
           ),
-        ),
+        ],
       ),
+      actions: [
+        TextButton(onPressed: widget.onClose, child: const Text('Cancel')),
+        const SizedBox(width: 8),
+        FilledButton(
+          onPressed: _valid
+              ? () => widget.onAdd({
+                    'name': _nameCtl.text,
+                    'email': _emailCtl.text,
+                    'password': _pwCtl.text,
+                  })
+              : null,
+          child: const Text('Add'),
+        ),
+      ],
     );
   }
 }
@@ -253,18 +198,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
     final rows = await api.getRepairJobs(organizationId: orgId);
     final jobs = rows.map(RepairJob.fromApi).toList();
 
-    final Map<int, List<InventoryUsage>> usages = {};
-    final customerIds = jobs.map((j) => j.customerId).toSet();
-    for (final cid in customerIds) {
-      try {
-        final detail = await api.getCustomerDetail(cid);
-        final usageList = (detail['inventory_usage'] ?? []) as List<dynamic>;
-        for (final u in usageList) {
-          final inv = InventoryUsage.fromApi(u as Map<String, dynamic>);
-          usages.putIfAbsent(inv.jobId, () => []).add(inv);
-        }
-      } catch (_) {}
-    }
+    final usages = await TechFixApi.fetchUsagesForJobs(api, jobs);
     return (jobs: jobs, usages: usages);
   }
 

@@ -35,8 +35,7 @@ class StatCard extends StatelessWidget {
               Text(
                 label,
                 style: const TextStyle(
-                  fontFamily: 'Space Grotesk',
-                  fontSize: 13,
+                                    fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: AppTheme.muted,
                 ),
@@ -57,8 +56,7 @@ class StatCard extends StatelessWidget {
           Text(
             value,
             style: const TextStyle(
-              fontFamily: 'Space Grotesk',
-              fontSize: 30,
+                            fontSize: 30,
               fontWeight: FontWeight.w700,
               color: AppTheme.ink,
               height: 1,
@@ -70,8 +68,7 @@ class StatCard extends StatelessWidget {
             Text(
               sub!,
               style: const TextStyle(
-                fontFamily: 'Space Grotesk',
-                fontSize: 12.5,
+                                fontSize: 12.5,
                 fontWeight: FontWeight.w500,
                 color: AppTheme.faint,
               ),

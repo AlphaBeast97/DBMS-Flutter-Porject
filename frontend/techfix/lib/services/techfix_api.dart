@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:techfix/models/inventory_usage.dart';
+import 'package:techfix/models/repair_job.dart';
 
 class TechFixApi {
   TechFixApi({
@@ -325,4 +327,24 @@ class TechFixApi {
     return body['data']['employee_id'] as int;
   }
 
+  /// Fetch inventory usage for a list of jobs grouped by job ID.
+  /// Shared by technician and manager screens.
+  static Future<Map<int, List<InventoryUsage>>> fetchUsagesForJobs(
+    TechFixApi api,
+    List<RepairJob> jobs,
+  ) async {
+    final map = <int, List<InventoryUsage>>{};
+    final customerIds = jobs.map((j) => j.customerId).whereType<int>().toSet();
+    for (final cid in customerIds) {
+      try {
+        final detail = await api.getCustomerDetail(cid);
+        final usageList = (detail['inventory_usage'] ?? []) as List<dynamic>;
+        for (final u in usageList) {
+          final inv = InventoryUsage.fromApi(u as Map<String, dynamic>);
+          map.putIfAbsent(inv.jobId, () => []).add(inv);
+        }
+      } catch (_) {}
+    }
+    return map;
+  }
 }

@@ -13,6 +13,7 @@ import 'package:techfix/widgets/job_card.dart';
 import 'package:techfix/widgets/loading_state.dart';
 import 'package:techfix/models/inventory_usage.dart';
 import 'package:techfix/widgets/sheet.dart';
+import 'package:techfix/widgets/techfix_dialog.dart';
 import 'package:techfix/widgets/toast.dart';
 
 // ─────────────────────────────────────────────────────────────
@@ -47,132 +48,79 @@ class _StatusRadioDialogState extends State<StatusRadioDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: GestureDetector(
-        onTap: widget.onClose,
-        child: Container(
-          color: const Color(0x6B141414),
-          child: Center(
-            child: GestureDetector(
-              onTap: () {},
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 22),
-                width: double.infinity,
-                constraints: const BoxConstraints(maxWidth: 340, maxHeight: 500),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(26),
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: Padding(
-                    padding: const EdgeInsets.all(22),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: AppTheme.sky.withOpacity(0.14),
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: const Icon(Icons.cached, size: 26, color: AppTheme.sky),
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Update status',
-                          style: TextStyle(
-                            
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.ink,
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        Text(
-                          '${widget.job.deviceLabel} \u00b7 #${widget.job.id}',
-                          style: const TextStyle(
-                            
-                            fontSize: 13,
-                            color: AppTheme.muted,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        ..._order.map((st) {
-                          final active = _val == st;
-                          final sColor = AppTheme.statusColor(st);
-                          final sBg = AppTheme.statusBg(st);
-                          final sIcon = AppTheme.statusIcon(st);
-                          final sLabel = AppTheme.statusLabel(st);
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: GestureDetector(
-                              onTap: () => setState(() => _val = st),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 150),
-                                padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
-                                decoration: BoxDecoration(
-                                  color: active ? sBg : Colors.white,
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(
-                                    color: active ? sColor : AppTheme.line,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(sIcon, size: 20, color: sColor),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        sLabel,
-                                        style: const TextStyle(
-                                          
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppTheme.ink,
-                                        ),
-                                      ),
-                                    ),
-                                    Icon(
-                                      active ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                                      size: 20,
-                                      color: active ? sColor : AppTheme.faint,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
-                        const SizedBox(height: 6),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            TextButton(
-                              onPressed: widget.onClose,
-                              child: const Text('Cancel'),
-                            ),
-                            const SizedBox(width: 8),
-                            FilledButton(
-                              onPressed: () => widget.onSave(_val),
-                              style: FilledButton.styleFrom(backgroundColor: AppTheme.sky),
-                              child: const Text('Save'),
-                            ),
-                          ],
-                        ),
-                      ],
+    final radioOptions = _order.map((st) {
+      final active = _val == st;
+      final sColor = AppTheme.statusColor(st);
+      final sBg = AppTheme.statusBg(st);
+      final sIcon = AppTheme.statusIcon(st);
+      final sLabel = AppTheme.statusLabel(st);
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: GestureDetector(
+          onTap: () => setState(() => _val = st),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+            decoration: BoxDecoration(
+              color: active ? sBg : Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: active ? sColor : AppTheme.line,
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(sIcon, size: 20, color: sColor),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    sLabel,
+                    style: const TextStyle(
+                      
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.ink,
                     ),
                   ),
                 ),
-              ),
+                Icon(
+                  active ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                  size: 20,
+                  color: active ? sColor : AppTheme.faint,
+                ),
+              ],
             ),
           ),
         ),
+      );
+    });
+
+    return TechFixDialog(
+      icon: Icons.cached,
+      iconColor: AppTheme.sky,
+      title: 'Update status',
+      onClose: widget.onClose,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '${widget.job.deviceLabel} \u00b7 #${widget.job.id}',
+            style: const TextStyle(fontSize: 13, color: AppTheme.muted),
+          ),
+          const SizedBox(height: 14),
+          ...radioOptions,
+        ],
       ),
+      actions: [
+        TextButton(onPressed: widget.onClose, child: const Text('Cancel')),
+        const SizedBox(width: 8),
+        FilledButton(
+          onPressed: () => widget.onSave(_val),
+          style: FilledButton.styleFrom(backgroundColor: AppTheme.sky),
+          child: const Text('Save'),
+        ),
+      ],
     );
   }
 }
@@ -209,101 +157,44 @@ class _EditDescDialogState extends State<EditDescDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: GestureDetector(
-        onTap: widget.onClose,
-        child: Container(
-          color: const Color(0x6B141414),
-          child: Center(
-            child: GestureDetector(
-              onTap: () {},
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 22),
-                width: double.infinity,
-                constraints: const BoxConstraints(maxWidth: 340, maxHeight: 400),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(26),
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: Padding(
-                    padding: const EdgeInsets.all(22),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: AppTheme.ink.withOpacity(0.14),
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: const Icon(Icons.edit, size: 26, color: AppTheme.ink),
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Edit job',
-                          style: TextStyle(
-                            
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.ink,
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        Field(
-                          label: 'Description',
-                          value: _desc,
-                          onChanged: (v) => setState(() => _desc = v),
-                          multiline: true,
-                          rows: 4,
-                          autoFocus: true,
-                        ),
-                        const SizedBox(height: 12),
-                        Field(
-                          label: 'Estimated cost',
-                          value: _cost,
-                          onChanged: (v) => setState(() => _cost = v),
-                          icon: Icons.payments,
-                          suffix: const Text(
-                            'USD',
-                            style: TextStyle(
-                              
-                              fontSize: 14,
-                              color: AppTheme.faint,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            TextButton(
-                              onPressed: widget.onClose,
-                              child: const Text('Cancel'),
-                            ),
-                            const SizedBox(width: 8),
-                            FilledButton(
-                              onPressed: () => widget.onSave({
-                                'description': _desc,
-                                'cost': double.tryParse(_cost) ?? 0,
-                              }),
-                              child: const Text('Save'),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
+    return TechFixDialog(
+      icon: Icons.edit,
+      iconColor: AppTheme.ink,
+      title: 'Edit job',
+      onClose: widget.onClose,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Field(
+            label: 'Description',
+            value: _desc,
+            onChanged: (v) => setState(() => _desc = v),
+            multiline: true,
+            rows: 4,
+            autoFocus: true,
           ),
-        ),
+          const SizedBox(height: 12),
+          Field(
+            label: 'Estimated cost',
+            value: _cost,
+            onChanged: (v) => setState(() => _cost = v),
+            icon: Icons.payments,
+            keyboardType: TextInputType.number,
+            suffix: const Text('USD', style: TextStyle(fontSize: 14, color: AppTheme.faint)),
+          ),
+        ],
       ),
+      actions: [
+        TextButton(onPressed: widget.onClose, child: const Text('Cancel')),
+        const SizedBox(width: 8),
+        FilledButton(
+          onPressed: () => widget.onSave({
+            'description': _desc,
+            'cost': double.tryParse(_cost) ?? 0,
+          }),
+          child: const Text('Save'),
+        ),
+      ],
     );
   }
 }
@@ -878,25 +769,13 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
   }
 
   Future<Map<int, List<InventoryUsage>>> _fetchUsagesForJobs(List<RepairJob> jobs) async {
-    final session = AppSessionScope.of(context);
+    final s = AppSessionScope.of(context);
     final api = TechFixApi(
-      baseUrl: session.baseUrl,
-      email: session.email,
-      password: session.password,
+      baseUrl: s.baseUrl,
+      email: s.email,
+      password: s.password,
     );
-    final Map<int, List<InventoryUsage>> map = {};
-    final customerIds = jobs.map((j) => j.customerId).toSet();
-    for (final cid in customerIds) {
-      try {
-        final detail = await api.getCustomerDetail(cid);
-        final usages = (detail['inventory_usage'] ?? []) as List<dynamic>;
-        for (final u in usages) {
-          final inv = InventoryUsage.fromApi(u as Map<String, dynamic>);
-          map.putIfAbsent(inv.jobId, () => []).add(inv);
-        }
-      } catch (_) {}
-    }
-    return map;
+    return TechFixApi.fetchUsagesForJobs(api, jobs);
   }
 
   void _refresh() {
