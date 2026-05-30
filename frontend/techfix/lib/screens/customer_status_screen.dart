@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:techfix/models/repair_job.dart';
-import 'package:techfix/screens/login_screen.dart';
 import 'package:techfix/services/techfix_api.dart';
+import 'package:techfix/shared/utils.dart';
 import 'package:techfix/state/app_session_scope.dart';
 import 'package:techfix/theme/app_theme.dart';
 import 'package:techfix/widgets/app_background.dart';
@@ -329,14 +329,7 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
     );
   }
 
-  void _signOut() {
-    final session = AppSessionScope.of(context);
-    session.signOut();
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-      (_) => false,
-    );
-  }
+  void _signOut() => signOut(context);
 
   @override
   Widget build(BuildContext context) {
@@ -344,333 +337,350 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'My repairs',
-                    style: TextStyle(
-                      
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.ink,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    'Track your devices',
-                    style: TextStyle(
-                      
-                      fontSize: 14,
-                      color: AppTheme.muted,
-                    ),
-                  ),
-                ],
-              ),
-              TextButton(onPressed: _signOut, child: const Text('Sign out')),
-            ],
-          ),
+          _buildHeader(),
           const SizedBox(height: 8),
+          if (!_isCustomerRole) _buildSearchBar(),
+          const SizedBox(height: 16),
+          _buildContent(),
+        ],
+      ),
+    );
+  }
 
-          // Search by customer ID (when not customer role)
-          if (!_isCustomerRole) ...[
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppTheme.line2),
-                    ),
-                    child: TextField(
-                      controller: _customerIdController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        hintText: 'Customer ID',
-                        prefixIcon: Icon(Icons.search),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: 14),
-                      ),
-                    ),
+  Widget _buildHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'My repairs',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.ink,
+                letterSpacing: -0.5,
+              ),
+            ),
+            SizedBox(height: 2),
+            Text(
+              'Track your devices',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppTheme.muted,
+              ),
+            ),
+          ],
+        ),
+        TextButton(onPressed: _signOut, child: const Text('Sign out')),
+      ],
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppTheme.line2),
+                ),
+                child: TextField(
+                  controller: _customerIdController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    hintText: 'Customer ID',
+                    prefixIcon: Icon(Icons.search),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(vertical: 14),
                   ),
                 ),
-                const SizedBox(width: 12),
-                FilledButton(
-                  onPressed: _loadCustomer,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppTheme.sky,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              ),
+            ),
+            const SizedBox(width: 12),
+            FilledButton(
+              onPressed: _loadCustomer,
+              style: FilledButton.styleFrom(
+                backgroundColor: AppTheme.sky,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              ),
+              child: const Text('Load'),
+            ),
+          ],
+        ),
+        if (_errorMessage != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            _errorMessage!,
+            style: const TextStyle(fontSize: 12, color: AppTheme.coral),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildContent() {
+    if (_customerFuture == null && !_isCustomerRole) {
+      return const Text(
+        'Load a customer to view their repair jobs.',
+        style: TextStyle(fontSize: 14, color: AppTheme.faint),
+      );
+    }
+    if (_customerFuture == null) return const SizedBox.shrink();
+
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _customerFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const LoadingState(count: 3);
+        }
+
+        if (snapshot.hasError || !snapshot.hasData) {
+          return ErrorState(
+            title: 'Unable to load customer data',
+            body: snapshot.error?.toString() ?? 'Unknown error',
+            onRetry: () => setState(() {
+              final session = AppSessionScope.of(context);
+              if (_isCustomerRole) {
+                _customerFuture = TechFixApi(
+                  baseUrl: session.baseUrl,
+                  email: session.email,
+                  password: session.password,
+                ).getCustomerMe();
+              }
+            }),
+          );
+        }
+
+        final data = snapshot.data!;
+        final customer = (data['customer'] as Map<String, dynamic>?) ?? data;
+        final devices = (data['devices'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
+        final allJobs = (data['repair_jobs'] as List<dynamic>?)
+                ?.cast<Map<String, dynamic>>()
+                .map(RepairJob.fromApi)
+                .toList() ??
+            [];
+        final customerName = _asText(customer['name'], fallback: 'Customer');
+        final customerPhone = _asText(customer['phone']);
+        final memberSince = _asText(customer['since'] ?? customer['created_at']);
+
+        final activeJobs = allJobs
+            .where((j) => j.status.toLowerCase() != 'cancelled' && j.status.toLowerCase() != 'delivered')
+            .length;
+        final readyCount = allJobs
+            .where((j) => j.status.toLowerCase() == 'ready')
+            .length;
+
+        if (!_isCustomerRole && devices.isEmpty && allJobs.isEmpty) {
+          return const EmptyState(
+            icon: Icons.devices_other,
+            title: 'No devices yet',
+            body: 'When you drop off a device for repair, it\'ll show up here so you can track its progress.',
+            color: AppTheme.sky,
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildProfileCard(customerName, customerPhone, memberSince),
+            const SizedBox(height: 16),
+            _buildStats(activeJobs, readyCount),
+            const SizedBox(height: 20),
+            _buildDeviceSection(devices, allJobs),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildProfileCard(String name, String phone, String memberSince) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.line),
+      ),
+      child: Row(
+        children: [
+          Avatar(name: name, size: 54, color: AppTheme.sky),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.ink,
+                    letterSpacing: -0.3,
                   ),
-                  child: const Text('Load'),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    const Icon(Icons.call, size: 14, color: AppTheme.faint),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        phone,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppTheme.muted,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-            if (_errorMessage != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                _errorMessage!,
-                style: const TextStyle(fontSize: 12, color: AppTheme.coral),
+          ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              const Pill(
+                color: AppTheme.teal,
+                icon: Icons.verified,
+                child: Text('Member'),
               ),
+              if (memberSince.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 3),
+                  child: Text(
+                    _shortDate(memberSince),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppTheme.muted,
+                    ),
+                  ),
+                ),
             ],
-          ],
-
-          const SizedBox(height: 16),
-
-          if (_customerFuture == null && !_isCustomerRole)
-            const Text(
-              'Load a customer to view their repair jobs.',
-              style: TextStyle( fontSize: 14, color: AppTheme.faint),
-            )
-          else if (_customerFuture != null)
-            FutureBuilder<Map<String, dynamic>>(
-              future: _customerFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const LoadingState(count: 3);
-                }
-
-                if (snapshot.hasError || !snapshot.hasData) {
-                  return ErrorState(
-                    title: 'Unable to load customer data',
-                    body: snapshot.error?.toString() ?? 'Unknown error',
-                    onRetry: () => setState(() {
-                      final session = AppSessionScope.of(context);
-                      if (_isCustomerRole) {
-                        _customerFuture = TechFixApi(
-                          baseUrl: session.baseUrl,
-                          email: session.email,
-                          password: session.password,
-                        ).getCustomerMe();
-                      }
-                    }),
-                  );
-                }
-
-                final data = snapshot.data!;
-                final customer = (data['customer'] as Map<String, dynamic>?) ?? data;
-                final devices = (data['devices'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
-                final allJobs = (data['repair_jobs'] as List<dynamic>?)
-                        ?.cast<Map<String, dynamic>>()
-                        .map(RepairJob.fromApi)
-                        .toList() ??
-                    [];
-                final customerName = _asText(customer['name'], fallback: 'Customer');
-                final customerPhone = _asText(customer['phone']);
-                final memberSince = _asText(customer['since'] ?? customer['created_at']);
-
-                final activeJobs = allJobs
-                    .where((j) => j.status.toLowerCase() != 'cancelled' && j.status.toLowerCase() != 'delivered')
-                    .length;
-                final readyCount = allJobs
-                    .where((j) => j.status.toLowerCase() == 'ready')
-                    .length;
-
-                if (!_isCustomerRole && devices.isEmpty && allJobs.isEmpty) {
-                  return const EmptyState(
-                    icon: Icons.devices_other,
-                    title: 'No devices yet',
-                    body: 'When you drop off a device for repair, it\'ll show up here so you can track its progress.',
-                    color: AppTheme.sky,
-                  );
-                }
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Profile card
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppTheme.line),
-                      ),
-                      child: Row(
-                        children: [
-                          Avatar(name: customerName, size: 54, color: AppTheme.sky),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  customerName,
-                                  style: const TextStyle(
-                                    
-                                    fontSize: 19,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppTheme.ink,
-                                    letterSpacing: -0.3,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.call, size: 14, color: AppTheme.faint),
-                                    const SizedBox(width: 6),
-                                    Flexible(
-                                      child: Text(
-                                        customerPhone,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          
-                                          fontSize: 13,
-                                          color: AppTheme.muted,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              const Pill(
-                                color: AppTheme.teal,
-                                icon: Icons.verified,
-                                child: Text('Member'),
-                              ),
-                              if (memberSince.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 3),
-                                  child: Text(
-                                    _shortDate(memberSince),
-                                    style: const TextStyle(
-                                      
-                                      fontSize: 11,
-                                      color: AppTheme.muted,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Snapshot stats
-                    Row(
-                      children: [
-                        Expanded(
-                          child: StatCard(
-                            label: 'Active repairs',
-                            value: activeJobs.toString(),
-                            icon: Icons.build,
-                            accent: AppTheme.sky,
-                            sub: 'in the shop now',
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: StatCard(
-                            label: 'Ready today',
-                            value: readyCount.toString(),
-                            icon: Icons.check_circle,
-                            accent: AppTheme.teal,
-                            sub: 'for pickup',
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Devices
-                    SectionHeader(
-                      title: 'Your devices',
-                      count: devices.length,
-                    ),
-                    const SizedBox(height: 12),
-
-                    if (devices.isEmpty)
-                      const EmptyState(
-                        icon: Icons.devices_other,
-                        title: 'No devices yet',
-                        body: 'When you drop off a device for repair, it\'ll show up here so you can track its progress.',
-                        color: AppTheme.sky,
-                      )
-                    else
-                      ...devices.map((device) {
-                        final deviceJobsForCard = allJobs.where((j) => j.deviceId == (device['device_id'] as int)).toList();
-                        final act = deviceJobsForCard.where((j) => j.status.toLowerCase() == 'pending' || j.status.toLowerCase() == 'repairing').firstOrNull;
-                        final rdy = deviceJobsForCard.where((j) => j.status.toLowerCase() == 'ready').firstOrNull;
-                        final lead = rdy ?? act ?? deviceJobsForCard.firstOrNull;
-
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 11),
-                          child: GestureDetector(
-                            onTap: () => _showDeviceJobsDialog(device, allJobs),
-                            child: Container(
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: AppTheme.line),
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 46,
-                                    height: 46,
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.cream,
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                    child: Icon(_deviceIconData(device), size: 24, color: AppTheme.ink),
-                                  ),
-                                  const SizedBox(width: 13),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          _deviceLabel(device),
-                                          style: const TextStyle(
-                                            
-                                            fontSize: 15.5,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppTheme.ink,
-                                          ),
-                                        ),
-                                        Text(
-                                          '${deviceJobsForCard.length} repair${deviceJobsForCard.length != 1 ? 's' : ''} \u00b7 tap to view',
-                                          style: const TextStyle(
-                                            
-                                            fontSize: 12.5,
-                                            color: AppTheme.faint,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  if (lead != null)
-                                    Padding(
-                                      padding: const EdgeInsets.only(right: 8),
-                                      child: StatusBadge(status: lead.status, sm: true),
-                                    ),
-                                  const Icon(Icons.chevron_right, size: 22, color: AppTheme.faint),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                  ],
-                );
-              },
-            ),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildStats(int activeJobs, int readyCount) {
+    return Row(
+      children: [
+        Expanded(
+          child: StatCard(
+            label: 'Active repairs',
+            value: activeJobs.toString(),
+            icon: Icons.build,
+            accent: AppTheme.sky,
+            sub: 'in the shop now',
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: StatCard(
+            label: 'Ready today',
+            value: readyCount.toString(),
+            icon: Icons.check_circle,
+            accent: AppTheme.teal,
+            sub: 'for pickup',
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDeviceSection(List<Map<String, dynamic>> devices, List<RepairJob> allJobs) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(
+          title: 'Your devices',
+          count: devices.length,
+        ),
+        const SizedBox(height: 12),
+        if (devices.isEmpty)
+          const EmptyState(
+            icon: Icons.devices_other,
+            title: 'No devices yet',
+            body: 'When you drop off a device for repair, it\'ll show up here so you can track its progress.',
+            color: AppTheme.sky,
+          )
+        else
+          ...devices.map((device) {
+            final deviceJobsForCard = allJobs.where((j) => j.deviceId == (device['device_id'] as int)).toList();
+            final act = deviceJobsForCard.where((j) => j.status.toLowerCase() == 'pending' || j.status.toLowerCase() == 'repairing').firstOrNull;
+            final rdy = deviceJobsForCard.where((j) => j.status.toLowerCase() == 'ready').firstOrNull;
+            final lead = rdy ?? act ?? deviceJobsForCard.firstOrNull;
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 11),
+              child: GestureDetector(
+                onTap: () => _showDeviceJobsDialog(device, allJobs),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppTheme.line),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: AppTheme.cream,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(_deviceIconData(device), size: 24, color: AppTheme.ink),
+                      ),
+                      const SizedBox(width: 13),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _deviceLabel(device),
+                              style: const TextStyle(
+                                fontSize: 15.5,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.ink,
+                              ),
+                            ),
+                            Text(
+                              '${deviceJobsForCard.length} repair${deviceJobsForCard.length != 1 ? 's' : ''} \u00b7 tap to view',
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                color: AppTheme.faint,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (lead != null)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: StatusBadge(status: lead.status, sm: true),
+                        ),
+                      const Icon(Icons.chevron_right, size: 22, color: AppTheme.faint),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+      ],
     );
   }
 }

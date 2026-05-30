@@ -1,170 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:techfix/models/repair_job.dart';
-import 'package:techfix/screens/login_screen.dart';
+import 'package:techfix/models/inventory_usage.dart';
+import 'package:techfix/screens/manager/add_staff_dialog.dart';
+import 'package:techfix/screens/manager/donut_painter.dart';
 import 'package:techfix/services/techfix_api.dart';
+import 'package:techfix/shared/utils.dart';
 import 'package:techfix/state/app_session_scope.dart';
 import 'package:techfix/theme/app_theme.dart';
 import 'package:techfix/widgets/app_background.dart';
-import 'package:techfix/models/inventory_usage.dart';
 import 'package:techfix/widgets/empty_state.dart';
 import 'package:techfix/widgets/error_state.dart';
-import 'package:techfix/widgets/field.dart';
 import 'package:techfix/widgets/loading_state.dart';
 import 'package:techfix/widgets/job_card.dart';
 import 'package:techfix/widgets/section_header.dart';
-import 'package:techfix/widgets/techfix_dialog.dart';
 import 'package:techfix/widgets/toast.dart';
-
-// ─────────────────────────────────────────────────────────────
-// Donut chart — CustomPainter
-// ─────────────────────────────────────────────────────────────
-class _DonutPainter extends CustomPainter {
-  final List<({Color color, double count})> segments;
-
-  _DonutPainter({required this.segments});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    const thickness = 22.0;
-    final total = segments.fold<double>(0, (s, seg) => s + seg.count);
-    if (total <= 0) return;
-
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = (size.width - thickness) / 2;
-    final rect = Rect.fromCircle(center: center, radius: radius);
-
-    // Background circle
-    final bgPaint = Paint()
-      ..color = AppTheme.line
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = thickness;
-    canvas.drawCircle(center, radius, bgPaint);
-
-    double startAngle = -1.5708; // -90 degrees
-    for (final seg in segments) {
-      final sweepAngle = (seg.count / total) * 6.28319; // full circle
-      final paint = Paint()
-        ..color = seg.color
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = thickness
-        ..strokeCap = StrokeCap.round;
-
-      canvas.drawArc(rect, startAngle, sweepAngle.clamp(0.001, 6.28319), false, paint);
-      startAngle += sweepAngle;
-    }
-  }
-
-  @override
-  bool shouldRepaint(_DonutPainter old) => segments != old.segments;
-}
-
-// ─────────────────────────────────────────────────────────────
-// AddStaffDialog
-// ─────────────────────────────────────────────────────────────
-class AddStaffDialog extends StatefulWidget {
-  final VoidCallback onClose;
-  final ValueChanged<Map<String, String>> onAdd;
-
-  const AddStaffDialog({
-    super.key,
-    required this.onClose,
-    required this.onAdd,
-  });
-
-  @override
-  State<AddStaffDialog> createState() => _AddStaffDialogState();
-}
-
-class _AddStaffDialogState extends State<AddStaffDialog> {
-  final _nameCtl = TextEditingController();
-  final _emailCtl = TextEditingController();
-  final _pwCtl = TextEditingController();
-
-  bool get _valid => _nameCtl.text.isNotEmpty &&
-      _emailCtl.text.isNotEmpty &&
-      RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(_emailCtl.text) &&
-      _pwCtl.text.length >= 6;
-
-  @override
-  void dispose() {
-    _nameCtl.dispose();
-    _emailCtl.dispose();
-    _pwCtl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return TechFixDialog(
-      icon: Icons.person_add,
-      iconColor: AppTheme.coral,
-      title: 'Add technician',
-      onClose: widget.onClose,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Field(
-            label: 'Full name',
-            icon: Icons.badge,
-            value: _nameCtl.text,
-            onChanged: (v) { _nameCtl.text = v; setState(() {}); },
-            autoFocus: true,
-          ),
-          const SizedBox(height: 12),
-          Field(
-            label: 'Work email',
-            icon: Icons.mail,
-            value: _emailCtl.text,
-            onChanged: (v) { _emailCtl.text = v; setState(() {}); },
-            keyboardType: TextInputType.emailAddress,
-          ),
-          const SizedBox(height: 12),
-          Field(
-            label: 'Password',
-            icon: Icons.lock,
-            value: _pwCtl.text,
-            onChanged: (v) { _pwCtl.text = v; setState(() {}); },
-            obscureText: true,
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppTheme.teal.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.engineering, size: 17, color: AppTheme.teal),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Added as a Technician with their own job console.',
-                    style: TextStyle(fontSize: 12, color: AppTheme.muted, height: 1.4),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(onPressed: widget.onClose, child: const Text('Cancel')),
-        const SizedBox(width: 8),
-        FilledButton(
-          onPressed: _valid
-              ? () => widget.onAdd({
-                    'name': _nameCtl.text,
-                    'email': _emailCtl.text,
-                    'password': _pwCtl.text,
-                  })
-              : null,
-          child: const Text('Add'),
-        ),
-      ],
-    );
-  }
-}
 
 // ─────────────────────────────────────────────────────────────
 // ManagerScreen
@@ -204,16 +53,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
 
   void _refresh() => setState(() => _jobsFuture = _loadData());
 
-  void _signOut() {
-    final session = AppSessionScope.of(context);
-    session.signOut();
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-      (_) => false,
-    );
-  }
-
-  String fmtMoney(double n) => '\$${n.toStringAsFixed(2)}';
+  void _signOut() => signOut(context);
 
   @override
   Widget build(BuildContext context) {
@@ -326,7 +166,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
                                 width: 150,
                                 height: 150,
                                 child: CustomPaint(
-                                  painter: _DonutPainter(
+                                  painter: DonutPainter(
                                     segments: distribution.map((d) => (
                                       color: AppTheme.statusColor(d.status),
                                       count: d.count.toDouble(),
@@ -532,9 +372,9 @@ class _ManagerScreenState extends State<ManagerScreen> {
                           const SizedBox(height: 10),
                           Row(
                             children: [
-                              _LegendDot(color: AppTheme.teal, label: 'Finalized'),
+                              LegendDot(color: AppTheme.teal, label: 'Finalized'),
                               const SizedBox(width: 16),
-                              _LegendDot(color: AppTheme.teal.withOpacity(0.3), label: 'Projected'),
+                              LegendDot(color: AppTheme.teal.withOpacity(0.3), label: 'Projected'),
                             ],
                           ),
                         ],
@@ -595,35 +435,4 @@ class _ManagerScreenState extends State<ManagerScreen> {
   }
 }
 
-class _LegendDot extends StatelessWidget {
-  final Color color;
-  final String label;
 
-  const _LegendDot({required this.color, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 9,
-          height: 9,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(3),
-          ),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: const TextStyle(
-            
-            fontSize: 11.5,
-            color: AppTheme.muted,
-          ),
-        ),
-      ],
-    );
-  }
-}

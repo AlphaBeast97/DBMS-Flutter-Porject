@@ -108,12 +108,19 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _ownerMode = mode);
   }
 
-  Future<void> _authenticateAndGo(String email, String password) async {
+  Future<void> _authenticateAndGo(String email, String password, {String? requiredRole}) async {
     final session = AppSessionScope.of(context);
     final baseUrl = _baseUrlController.text.trim();
 
     final api = TechFixApi(baseUrl: baseUrl, email: email, password: password);
     final employee = await api.authenticateEmployee();
+
+    if (requiredRole != null) {
+      final role = (employee['role'] as String?)?.trim();
+      if (role != requiredRole) {
+        throw Exception('Access denied: not a $requiredRole account.');
+      }
+    }
 
     session.updateCredentials(baseUrl: baseUrl, email: email, password: password);
     session.setEmployee(employee);
@@ -141,7 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      await _authenticateAndGo(email, _ownerPasswordController.text);
+      await _authenticateAndGo(email, _ownerPasswordController.text, requiredRole: 'Owner');
     } catch (error) {
       showToast(context, '$error', type: ToastType.error);
     } finally {

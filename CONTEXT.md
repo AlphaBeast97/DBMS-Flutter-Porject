@@ -168,6 +168,11 @@ Status: IMPLEMENTED IN PHASE 2
 - **Password obscuring**: Added `obscureText: true` on all password fields.
 - **Validation getters**: Updated `_valid` in CreateJobSheet (cost must be parseable as double), LogPartSheet (cost must be parseable), AddStaffDialog (email regex + password ≥ 6 chars).
 - **Toast system**: Created `lib/widgets/toast.dart` with `showToast()` utility — floating dark/coral snackbar from bottom with rounded corners. Replaced all 12 raw SnackBar calls across technician, manager, and customer screens.
+- **Deleted dead files**: Removed `mock_data.dart`, `models/customer.dart`, `models/device.dart`, `widgets/inventory_card.dart`, empty `lib/data/` directory.
+- **Screen modularization**: Split `technician_screen.dart` (1241→478 lines) into 5 files under `lib/screens/technician/` (StatusRadioDialog, EditDescDialog, CreateJobSheet, LogPartSheet). Split `manager_screen.dart` (629→438 lines) into 2 files under `lib/screens/manager/` (AddStaffDialog, DonutPainter+LegendDot). Split customer_status_screen.dart 333-line build into 7 focused private methods.
+- **Shared utils**: Created `lib/shared/utils.dart` with `signOut(context)`, `fmtMoney()`, `emailRegex`, `minPasswordLength` — replaced 3 duplicate signOut blocks, 2 duplicate fmtMoney, and 3 inline email regexes.
+- **FilterChip**: Extracted private `_FilterChip` to `widgets/filter_chip.dart` as public `FilterChipWidget`.
+- **Login role check**: Added `requiredRole` parameter to `_authenticateAndGo`. Owner Sign In now verifies role is `'Owner'` — technician creds in Owner tab reject with `"Access denied: not a Owner account."` instead of silently logging into the wrong role.
 
 ## Final Summary
 
