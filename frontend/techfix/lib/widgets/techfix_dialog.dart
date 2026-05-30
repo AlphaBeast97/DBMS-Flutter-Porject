@@ -54,14 +54,37 @@ class TechFixDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DialogScrim(onClose: onClose, child: Container(
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutBack,
+      builder: (context, val, child) {
+        return Opacity(
+          opacity: val.clamp(0.0, 1.0),
+          child: child,
+        );
+      },
+      child: DialogScrim(
+        onClose: onClose,
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutBack,
+          builder: (context, val, child) {
+            return Transform.scale(scale: 0.92 + 0.08 * val, child: child);
+          },
+          child: _buildContent(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    return Container(
       margin: const EdgeInsets.symmetric(horizontal: 22),
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 340, maxHeight: 0.8 * double.infinity),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
-      ),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(26)),
       child: Material(
         color: Colors.transparent,
         child: Padding(
@@ -72,12 +95,8 @@ class TechFixDialog extends StatelessWidget {
               if (icon != null) ...[
                 const SizedBox(height: 4),
                 Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: iconColor.withOpacity(0.14),
-                    borderRadius: BorderRadius.circular(15),
-                  ),
+                  width: 50, height: 50,
+                  decoration: BoxDecoration(color: iconColor.withOpacity(0.14), borderRadius: BorderRadius.circular(15)),
                   child: Icon(icon, size: 26, color: iconColor),
                 ),
                 const SizedBox(height: 12),
@@ -86,27 +105,18 @@ class TechFixDialog extends StatelessWidget {
                 Text(
                   title!,
                   textAlign: icon != null ? TextAlign.center : TextAlign.left,
-                  style: const TextStyle(
-                    
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.ink,
-                    letterSpacing: -0.3,
-                  ),
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.ink, letterSpacing: -0.3),
                 ),
               if (title != null) const SizedBox(height: 14),
               Flexible(child: SingleChildScrollView(child: child ?? const SizedBox.shrink())),
               if (actions != null) ...[
                 const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: actions!,
-                ),
+                Row(mainAxisAlignment: MainAxisAlignment.end, children: actions!),
               ],
             ],
           ),
         ),
       ),
-    ));
+    );
   }
 }

@@ -10,8 +10,9 @@ import 'package:techfix/theme/app_theme.dart';
 import 'package:techfix/widgets/app_background.dart';
 import 'package:techfix/widgets/empty_state.dart';
 import 'package:techfix/widgets/error_state.dart';
-import 'package:techfix/widgets/loading_state.dart';
+import 'package:techfix/widgets/fade_in.dart';
 import 'package:techfix/widgets/job_card.dart';
+import 'package:techfix/widgets/loading_state.dart';
 import 'package:techfix/widgets/section_header.dart';
 import 'package:techfix/widgets/toast.dart';
 
@@ -383,7 +384,13 @@ class _ManagerScreenState extends State<ManagerScreen> {
                     const SizedBox(height: 18),
                     SectionHeader(title: 'All repairs', count: jobs.length),
                     const SizedBox(height: 12),
-                    ...(jobs.toList()..sort((a, b) => b.id.compareTo(a.id))).take(_jobLimit).map((job) => JobCard(job: job, usages: jobUsages[job.id])),
+                    ...(jobs.toList()..sort((a, b) => b.id.compareTo(a.id))).take(_jobLimit).toList().asMap().entries.map((e) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: FadeIn(
+                        delayMs: e.key * 60,
+                        child: JobCard(job: e.value, usages: jobUsages[e.value.id]),
+                      ),
+                    )),
                     if (_jobLimit < jobs.length) ...[
                       const SizedBox(height: 6),
                       Center(

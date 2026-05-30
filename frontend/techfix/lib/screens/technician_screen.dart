@@ -12,6 +12,7 @@ import 'package:techfix/theme/app_theme.dart';
 import 'package:techfix/widgets/app_background.dart';
 import 'package:techfix/widgets/empty_state.dart';
 import 'package:techfix/widgets/error_state.dart';
+import 'package:techfix/widgets/fade_in.dart';
 import 'package:techfix/widgets/filter_chip.dart';
 import 'package:techfix/widgets/job_card.dart';
 import 'package:techfix/widgets/loading_state.dart';
@@ -336,23 +337,28 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
                 builder: (context, usagesSnap) {
                   final usagesMap = usagesSnap.data ?? {};
                   return Column(
-                    children: filtered.map((job) {
+                    children: filtered.asMap().entries.map((e) {
+                      final i = e.key;
+                      final job = e.value;
                       final usages = usagesMap[job.id] ?? [];
-                      return JobCard(
-                        job: job,
-                        key: ValueKey(job.id),
-                        usages: usages,
-                        onStatusTap: () => setState(() {
-                          _dialogType = 'status';
-                          _dialogJob = job;
-                        }),
-                        onEdit: () => setState(() {
-                          _dialogType = 'edit';
-                          _dialogJob = job;
-                        }),
-                        onCancel: () {
-                          _updateJobStatus(job.id, 'cancelled');
-                        },
+                      return FadeIn(
+                        delayMs: i * 60,
+                        child: JobCard(
+                          job: job,
+                          key: ValueKey(job.id),
+                          usages: usages,
+                          onStatusTap: () => setState(() {
+                            _dialogType = 'status';
+                            _dialogJob = job;
+                          }),
+                          onEdit: () => setState(() {
+                            _dialogType = 'edit';
+                            _dialogJob = job;
+                          }),
+                          onCancel: () {
+                            _updateJobStatus(job.id, 'cancelled');
+                          },
+                        ),
                       );
                     }).toList(),
                   );

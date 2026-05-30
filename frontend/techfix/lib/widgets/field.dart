@@ -63,39 +63,37 @@ class _FieldState extends State<Field> {
 
   @override
   Widget build(BuildContext context) {
-    final border = _focus ? AppTheme.teal : AppTheme.line2;
-
-    final field = Container(
-      constraints: widget.multiline ? null : const BoxConstraints(minHeight: 50),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: border, width: 1.5),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: FocusScope(
-        child: Focus(
-          onFocusChange: (v) => setState(() => _focus = v),
-          child: Row(
-            crossAxisAlignment: widget.multiline ? CrossAxisAlignment.start : CrossAxisAlignment.center,
-            children: [
-              if (widget.icon != null)
-                Padding(
-                  padding: EdgeInsets.only(left: 14, top: widget.multiline ? 14 : 0),
-                  child: Icon(widget.icon, size: 20, color: _focus ? AppTheme.teal : AppTheme.faint),
-                ),
-              Expanded(child: widget.multiline ? _buildMultiline() : _buildSingleLine()),
-              if (widget.suffix != null)
-                Padding(
-                  padding: const EdgeInsets.only(right: 14),
-                  child: widget.suffix!,
-                ),
-            ],
+    return Material(
+      type: MaterialType.transparency,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        constraints: widget.multiline ? null : const BoxConstraints(minHeight: 50),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: _focus ? AppTheme.teal : AppTheme.line2, width: 1.5),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: FocusScope(
+          child: Focus(
+            onFocusChange: (v) => setState(() => _focus = v),
+            child: Row(
+              crossAxisAlignment: widget.multiline ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+              children: [
+                if (widget.icon != null)
+                  Padding(
+                    padding: EdgeInsets.only(left: 14, top: widget.multiline ? 14 : 0),
+                    child: Icon(widget.icon, size: 20, color: _focus ? AppTheme.teal : AppTheme.faint),
+                  ),
+                Expanded(child: widget.multiline ? _buildMultiline() : _buildSingleLine()),
+                if (widget.suffix != null)
+                  Padding(padding: const EdgeInsets.only(right: 14), child: widget.suffix!),
+              ],
+            ),
           ),
         ),
       ),
     );
-
-    return Material(type: MaterialType.transparency, child: field);
   }
 
   Widget _buildSingleLine() {
@@ -113,7 +111,7 @@ class _FieldState extends State<Field> {
         hintText: widget.placeholder ?? widget.label,
         hintStyle: const TextStyle(color: AppTheme.faint, fontSize: 15),
       ),
-      style: const TextStyle( fontSize: 15, color: AppTheme.ink),
+      style: const TextStyle(fontSize: 15, color: AppTheme.ink),
     );
   }
 
@@ -130,7 +128,7 @@ class _FieldState extends State<Field> {
         hintText: widget.placeholder ?? widget.label,
         hintStyle: const TextStyle(color: AppTheme.faint, fontSize: 15),
       ),
-      style: const TextStyle( fontSize: 15, color: AppTheme.ink),
+      style: const TextStyle(fontSize: 15, color: AppTheme.ink),
     );
   }
 }

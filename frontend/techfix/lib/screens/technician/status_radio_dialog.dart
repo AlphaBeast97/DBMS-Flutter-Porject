@@ -30,7 +30,7 @@ class _StatusRadioDialogState extends State<StatusRadioDialog> {
 
   @override
   Widget build(BuildContext context) {
-    const statuses = ['Pending', 'Repairing', 'Ready'];
+    const statuses = ['Pending', 'Repairing', 'Ready', 'Delivered'];
     return TechFixDialog(
       icon: AppTheme.statusIcon(widget.job.status),
       iconColor: AppTheme.statusColor(widget.job.status),

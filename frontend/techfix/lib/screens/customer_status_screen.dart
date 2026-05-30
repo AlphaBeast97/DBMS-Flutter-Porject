@@ -8,6 +8,7 @@ import 'package:techfix/widgets/app_background.dart';
 import 'package:techfix/widgets/avatar.dart';
 import 'package:techfix/widgets/empty_state.dart';
 import 'package:techfix/widgets/error_state.dart';
+import 'package:techfix/widgets/fade_in.dart';
 import 'package:techfix/widgets/loading_state.dart';
 import 'package:techfix/widgets/pill.dart';
 import 'package:techfix/widgets/toast.dart';
@@ -162,7 +163,15 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
       barrierDismissible: true,
       barrierLabel: '',
       barrierColor: const Color(0x6B141414),
-      transitionDuration: const Duration(milliseconds: 180),
+      transitionDuration: const Duration(milliseconds: 200),
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return ScaleTransition(
+          scale: Tween<double>(begin: 0.92, end: 1.0).animate(
+            CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
+          ),
+          child: FadeTransition(opacity: animation, child: child),
+        );
+      },
       pageBuilder: (context, a1, a2) => Scaffold(
         backgroundColor: Colors.transparent,
         body: Center(
@@ -617,17 +626,21 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
             color: AppTheme.sky,
           )
         else
-          ...devices.map((device) {
+          ...devices.asMap().entries.map((e) {
+            final i = e.key;
+            final device = e.value;
             final deviceJobsForCard = allJobs.where((j) => j.deviceId == (device['device_id'] as int)).toList();
             final act = deviceJobsForCard.where((j) => j.status.toLowerCase() == 'pending' || j.status.toLowerCase() == 'repairing').firstOrNull;
             final rdy = deviceJobsForCard.where((j) => j.status.toLowerCase() == 'ready').firstOrNull;
             final lead = rdy ?? act ?? deviceJobsForCard.firstOrNull;
 
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 11),
-              child: GestureDetector(
-                onTap: () => _showDeviceJobsDialog(device, allJobs),
-                child: Container(
+            return FadeIn(
+              delayMs: i * 60,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 11),
+                child: GestureDetector(
+                  onTap: () => _showDeviceJobsDialog(device, allJobs),
+                  child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -678,7 +691,8 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
                   ),
                 ),
               ),
-            );
+            ),
+          );
           }),
       ],
     );
