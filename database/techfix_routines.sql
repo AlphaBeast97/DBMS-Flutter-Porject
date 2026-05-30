@@ -529,8 +529,7 @@ BEGIN
         FROM repair_jobs r
         JOIN devices d ON d.device_id = r.device_id
         JOIN customers c ON c.customer_id = d.customer_id
-        JOIN employees e ON e.organization_id = c.organization_id
-        WHERE e.employee_id = p_employee_id
+        WHERE r.created_by_employee_id = p_employee_id
         ORDER BY r.created_at DESC;
     ELSEIF p_status IN ('Pending','Repairing','Ready','Delivered','Cancelled') THEN
         SELECT
@@ -550,8 +549,7 @@ BEGIN
         FROM repair_jobs r
         JOIN devices d ON d.device_id = r.device_id
         JOIN customers c ON c.customer_id = d.customer_id
-        JOIN employees e ON e.organization_id = c.organization_id
-        WHERE e.employee_id = p_employee_id AND r.status = p_status
+        WHERE r.created_by_employee_id = p_employee_id AND r.status = p_status
         ORDER BY r.created_at DESC;
     ELSE
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Invalid status.';

@@ -6,7 +6,6 @@ import 'package:techfix/services/techfix_api.dart';
 import 'package:techfix/state/app_session_scope.dart';
 import 'package:techfix/widgets/app_background.dart';
 import 'package:techfix/widgets/section_header.dart';
-import 'package:techfix/widgets/stat_card.dart';
 
 class ManagerScreen extends StatefulWidget {
   const ManagerScreen({super.key});
@@ -21,6 +20,13 @@ class _ManagerScreenState extends State<ManagerScreen> {
   @override
   void initState() {
     super.initState();
+    // Don't load data here - wait for didChangeDependencies
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Safe to access AppSessionScope here, after InheritedWidget is built
     _jobsFuture = _loadJobs();
   }
 
@@ -293,12 +299,6 @@ class _ManagerScreenState extends State<ManagerScreen> {
           ),
           const SizedBox(height: 24),
 
-          SectionHeader(
-            title: 'Live stats',
-            actionLabel: 'Refresh',
-            onAction: _refresh,
-          ),
-          const SizedBox(height: 12),
           FutureBuilder<List<RepairJob>>(
             future: _jobsFuture,
             builder: (context, snapshot) {
@@ -342,6 +342,9 @@ class _ManagerScreenState extends State<ManagerScreen> {
               final delivered = jobs
                   .where((job) => job.status.toLowerCase() == 'delivered')
                   .length;
+              final cancelled = jobs
+                  .where((job) => job.status.toLowerCase() == 'cancelled')
+                  .length;
 
               final totalEstimated = jobs.fold<double>(
                 0,
@@ -354,20 +357,12 @@ class _ManagerScreenState extends State<ManagerScreen> {
 
               return Column(
                 children: [
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: [
-                      StatCard(label: 'Pending', value: pending.toString()),
-                      StatCard(label: 'Repairing', value: repairing.toString()),
-                      StatCard(label: 'Ready', value: ready.toString()),
-                      StatCard(label: 'Delivered', value: delivered.toString()),
-                    ],
-                  ),
-                  const SizedBox(height: 28),
-
                   // Cost Overview
-                  const SectionHeader(title: 'Revenue overview'),
+                  SectionHeader(
+                    title: 'Revenue overview',
+                    actionLabel: 'Refresh',
+                    onAction: _refresh,
+                  ),
                   const SizedBox(height: 12),
                   Card(
                     child: Padding(
@@ -451,6 +446,13 @@ class _ManagerScreenState extends State<ManagerScreen> {
                                       value: delivered.toDouble(),
                                       title: 'Done\n$delivered',
                                       color: Colors.grey,
+                                      radius: 60,
+                                    ),
+                                  if (cancelled > 0)
+                                    PieChartSectionData(
+                                      value: cancelled.toDouble(),
+                                      title: 'Cancelled\n$cancelled',
+                                      color: Colors.red,
                                       radius: 60,
                                     ),
                                 ],

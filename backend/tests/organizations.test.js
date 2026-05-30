@@ -39,3 +39,38 @@ test("POST /api/organizations creates an organization", async () => {
   assert.equal(response.status, 201);
   assert.deepEqual(response.body.data, rows[0]);
 });
+
+test("GET /api/organizations/:employeeId returns organizations for employee", async () => {
+  const orgs = [
+    { organization_id: 1, name: "Tech Corp" },
+    { organization_id: 2, name: "Service Inc" },
+  ];
+  const app = createApp({
+    callProcedure: async (name, params) => {
+      if (name === "sp_employee_login") {
+        return [
+          {
+            employee_id: 1,
+            organization_id: 1,
+            name: "Test Owner",
+            email: "owner@techfix.com",
+            role: "Owner",
+          },
+        ];
+      }
+
+      if (name === "sp_get_organizations_for_employee") {
+        return orgs;
+      }
+
+      return [];
+    },
+  });
+
+  const response = await request(app)
+    .get("/api/organizations/5")
+    .set("Authorization", authHeader);
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(response.body.data, orgs);
+});

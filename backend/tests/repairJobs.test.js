@@ -69,6 +69,45 @@ test("GET /api/repair-jobs returns data", async () => {
   assert.deepEqual(response.body.data, rows);
 });
 
+test("GET /api/repair-jobs filters by organization_id", async () => {
+  const rows = [
+    {
+      job_id: 2,
+      status: "Repairing",
+      description: "Screen replacement",
+      organization_id: 5,
+    },
+  ];
+
+  const app = createApp({
+    callProcedure: async (name, params) => {
+      if (name === "sp_employee_login") {
+        return [
+          {
+            employee_id: 1,
+            organization_id: 1,
+            name: "Test",
+            email: "tech@example.com",
+            role: "Employee",
+          },
+        ];
+      }
+      // When org_id is provided, 3rd param should be passed
+      if (name === "sp_get_repair_jobs" && params.length === 3 && params[2] === 5) {
+        return rows;
+      }
+      return [];
+    },
+  });
+
+  const response = await request(app)
+    .get("/api/repair-jobs?organization_id=5")
+    .set("Authorization", authHeader);
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(response.body.data, rows);
+});
+
 test("POST /api/repair-jobs validates required fields", async () => {
   const app = createApp({
     callProcedure: createMockCallProcedure([]),

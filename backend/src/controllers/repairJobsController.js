@@ -20,6 +20,7 @@ export function createRepairJobsController({ callProcedure }) {
       try {
         const employeeId = req.employee?.employee_id;
         const requestedEmployeeId = parsePositiveInt(req.query.employee_id);
+        const organizationId = parsePositiveInt(req.query.organization_id);
         const status = req.query.status;
 
         if (requestedEmployeeId && requestedEmployeeId !== employeeId) {
@@ -32,10 +33,15 @@ export function createRepairJobsController({ callProcedure }) {
           return res.status(400).json({ error: "status is invalid" });
         }
 
-        const rows = await callProcedure("sp_get_repair_jobs", [
-          employeeId,
-          status || null,
-        ]);
+        // Build parameters based on what's provided
+        const params = [employeeId, status || null];
+        
+        // If organization_id is provided, pass it as 3rd param
+        if (organizationId) {
+          params.push(organizationId);
+        }
+
+        const rows = await callProcedure("sp_get_repair_jobs", params);
 
         return res.status(200).json({ data: rows });
       } catch (err) {
