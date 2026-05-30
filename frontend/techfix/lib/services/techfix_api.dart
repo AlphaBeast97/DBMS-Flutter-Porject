@@ -153,10 +153,13 @@ class TechFixApi {
   // ========== REPAIR JOBS ==========
 
   /// GET /api/repair-jobs - Get all repair jobs (optionally filtered by status)
-  Future<List<Map<String, dynamic>>> getRepairJobs({String? status}) async {
+  Future<List<Map<String, dynamic>>> getRepairJobs({String? status, int? organizationId}) async {
+    final queryParams = <String, String>{};
+    if (status != null) queryParams['status'] = status;
+    if (organizationId != null) queryParams['organization_id'] = organizationId.toString();
     final uri = Uri.parse(
       '$baseUrl/api/repair-jobs',
-    ).replace(queryParameters: status == null ? null : {'status': status});
+    ).replace(queryParameters: queryParams.isEmpty ? null : queryParams);
     final response = await http.get(uri, headers: _headers);
 
     if (response.statusCode != 200) {

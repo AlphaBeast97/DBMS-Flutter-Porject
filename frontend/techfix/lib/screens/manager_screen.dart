@@ -37,7 +37,8 @@ class _ManagerScreenState extends State<ManagerScreen> {
       email: session.email,
       password: session.password,
     );
-    final rows = await api.getRepairJobs();
+    final orgId = session.employee?['organization_id'] as int?;
+    final rows = await api.getRepairJobs(organizationId: orgId);
     return rows.map(RepairJob.fromApi).toList();
   }
 

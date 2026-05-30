@@ -481,7 +481,8 @@ DELIMITER ;
 DELIMITER $$
 CREATE PROCEDURE sp_get_repair_jobs(
     IN p_employee_id INT,
-    IN p_status VARCHAR(20)
+    IN p_status VARCHAR(20),
+    IN p_org_id INT
 )
 BEGIN
     -- Validate required inputs
@@ -492,7 +493,8 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Employee does not exist.';
     END IF;
 
-    -- Optional status filter for dashboard views
+    -- When p_org_id is provided, return all jobs in the organization (manager view)
+    -- Otherwise, return only jobs created by the employee (technician view)
     IF p_status IS NULL OR p_status = '' THEN
         SELECT
             r.job_id,
@@ -511,7 +513,8 @@ BEGIN
         FROM repair_jobs r
         JOIN devices d ON d.device_id = r.device_id
         JOIN customers c ON c.customer_id = d.customer_id
-        WHERE r.created_by_employee_id = p_employee_id
+        WHERE (p_org_id IS NOT NULL AND c.organization_id = p_org_id)
+           OR (p_org_id IS NULL AND r.created_by_employee_id = p_employee_id)
         ORDER BY r.created_at DESC;
     ELSEIF p_status IN ('Pending','Repairing','Ready','Delivered','Cancelled') THEN
         SELECT
@@ -531,7 +534,8 @@ BEGIN
         FROM repair_jobs r
         JOIN devices d ON d.device_id = r.device_id
         JOIN customers c ON c.customer_id = d.customer_id
-        WHERE r.created_by_employee_id = p_employee_id AND r.status = p_status
+        WHERE (p_org_id IS NOT NULL AND c.organization_id = p_org_id AND r.status = p_status)
+           OR (p_org_id IS NULL AND r.created_by_employee_id = p_employee_id AND r.status = p_status)
         ORDER BY r.created_at DESC;
     ELSE
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Invalid status.';
