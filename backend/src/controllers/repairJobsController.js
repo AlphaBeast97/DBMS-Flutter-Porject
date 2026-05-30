@@ -35,7 +35,7 @@ export function createRepairJobsController({ callProcedure }) {
 
         // Build parameters based on what's provided
         const params = [employeeId, status || null];
-        
+
         // If organization_id is provided, pass it as 3rd param
         if (organizationId) {
           params.push(organizationId);

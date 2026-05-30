@@ -93,7 +93,11 @@ test("GET /api/repair-jobs filters by organization_id", async () => {
         ];
       }
       // When org_id is provided, 3rd param should be passed
-      if (name === "sp_get_repair_jobs" && params.length === 3 && params[2] === 5) {
+      if (
+        name === "sp_get_repair_jobs" &&
+        params.length === 3 &&
+        params[2] === 5
+      ) {
         return rows;
       }
       return [];
