@@ -5,12 +5,14 @@ import 'package:techfix/services/techfix_api.dart';
 import 'package:techfix/state/app_session_scope.dart';
 import 'package:techfix/theme/app_theme.dart';
 import 'package:techfix/widgets/app_background.dart';
+import 'package:techfix/models/inventory_usage.dart';
 import 'package:techfix/widgets/empty_state.dart';
 import 'package:techfix/widgets/error_state.dart';
 import 'package:techfix/widgets/field.dart';
 import 'package:techfix/widgets/loading_state.dart';
 import 'package:techfix/widgets/job_card.dart';
 import 'package:techfix/widgets/section_header.dart';
+import 'package:techfix/widgets/toast.dart';
 
 // ─────────────────────────────────────────────────────────────
 // Donut chart — CustomPainter
@@ -77,7 +79,10 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
   final _emailCtl = TextEditingController();
   final _pwCtl = TextEditingController();
 
-  bool get _valid => _nameCtl.text.isNotEmpty && _emailCtl.text.isNotEmpty && _pwCtl.text.isNotEmpty;
+  bool get _valid => _nameCtl.text.isNotEmpty &&
+      _emailCtl.text.isNotEmpty &&
+      RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(_emailCtl.text) &&
+      _pwCtl.text.length >= 6;
 
   @override
   void dispose() {
@@ -147,6 +152,7 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
                           icon: Icons.mail,
                           value: _emailCtl.text,
                           onChanged: (v) { _emailCtl.text = v; setState(() {}); },
+                          keyboardType: TextInputType.emailAddress,
                         ),
                         const SizedBox(height: 12),
                         Field(
@@ -154,6 +160,7 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
                           icon: Icons.lock,
                           value: _pwCtl.text,
                           onChanged: (v) { _pwCtl.text = v; setState(() {}); },
+                          obscureText: true,
                         ),
                         const SizedBox(height: 12),
                         Container(
@@ -225,22 +232,17 @@ class ManagerScreen extends StatefulWidget {
 }
 
 class _ManagerScreenState extends State<ManagerScreen> {
-  late Future<List<RepairJob>> _jobsFuture;
+  late Future<({List<RepairJob> jobs, Map<int, List<InventoryUsage>> usages})> _jobsFuture;
   bool _showAddStaff = false;
   int _jobLimit = 5;
 
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _jobsFuture = _loadJobs();
+    _jobsFuture = _loadData();
   }
 
-  Future<List<RepairJob>> _loadJobs() async {
+  Future<({List<RepairJob> jobs, Map<int, List<InventoryUsage>> usages})> _loadData() async {
     final session = AppSessionScope.of(context);
     final api = TechFixApi(
       baseUrl: session.baseUrl,
@@ -249,10 +251,24 @@ class _ManagerScreenState extends State<ManagerScreen> {
     );
     final orgId = session.employee?['organization_id'] as int?;
     final rows = await api.getRepairJobs(organizationId: orgId);
-    return rows.map(RepairJob.fromApi).toList();
+    final jobs = rows.map(RepairJob.fromApi).toList();
+
+    final Map<int, List<InventoryUsage>> usages = {};
+    final customerIds = jobs.map((j) => j.customerId).toSet();
+    for (final cid in customerIds) {
+      try {
+        final detail = await api.getCustomerDetail(cid);
+        final usageList = (detail['inventory_usage'] ?? []) as List<dynamic>;
+        for (final u in usageList) {
+          final inv = InventoryUsage.fromApi(u as Map<String, dynamic>);
+          usages.putIfAbsent(inv.jobId, () => []).add(inv);
+        }
+      } catch (_) {}
+    }
+    return (jobs: jobs, usages: usages);
   }
 
-  void _refresh() => setState(() => _jobsFuture = _loadJobs());
+  void _refresh() => setState(() => _jobsFuture = _loadData());
 
   void _signOut() {
     final session = AppSessionScope.of(context);
@@ -298,7 +314,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
                 TextButton(onPressed: _signOut, child: const Text('Sign out')),
               ],
             ),
-            body: FutureBuilder<List<RepairJob>>(
+            body: FutureBuilder(
               future: _jobsFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -318,7 +334,9 @@ class _ManagerScreenState extends State<ManagerScreen> {
                   );
                 }
 
-                final jobs = snapshot.data!;
+                final data = snapshot.data!;
+                final jobs = data.jobs;
+                final jobUsages = data.usages;
                 if (jobs.isEmpty) {
                   return const EmptyState(
                     icon: Icons.insights,
@@ -591,7 +609,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
                     const SizedBox(height: 18),
                     SectionHeader(title: 'All repairs', count: jobs.length),
                     const SizedBox(height: 12),
-                    ...(jobs.toList()..sort((a, b) => b.id.compareTo(a.id))).take(_jobLimit).map((job) => JobCard(job: job)),
+                    ...(jobs.toList()..sort((a, b) => b.id.compareTo(a.id))).take(_jobLimit).map((job) => JobCard(job: job, usages: jobUsages[job.id])),
                     if (_jobLimit < jobs.length) ...[
                       const SizedBox(height: 6),
                       Center(
@@ -631,17 +649,9 @@ class _ManagerScreenState extends State<ManagerScreen> {
                 email: data['email']!,
                 password: data['password']!,
               ).then((_) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Technician added!')),
-                  );
-                }
+                if (mounted) showToast(context, 'Technician added!');
               }).catchError((e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.coral),
-                  );
-                }
+                if (mounted) showToast(context, 'Error: $e', type: ToastType.error);
               });
               setState(() => _showAddStaff = false);
             },

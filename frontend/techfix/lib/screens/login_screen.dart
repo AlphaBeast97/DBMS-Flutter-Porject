@@ -7,6 +7,7 @@ import 'package:techfix/state/app_session_scope.dart';
 import 'package:techfix/theme/app_theme.dart';
 import 'package:techfix/widgets/app_background.dart';
 import 'package:techfix/widgets/field.dart';
+import 'package:techfix/widgets/toast.dart';
 
 enum AuthMode { owner, employee, customer }
 enum OwnerMode { signIn, signUp }
@@ -66,7 +67,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _customerEmailController = TextEditingController();
 
   bool _isSubmitting = false;
-  String? _errorMessage;
   AuthMode _authMode = AuthMode.owner;
   OwnerMode _ownerMode = OwnerMode.signIn;
 
@@ -98,18 +98,14 @@ class _LoginScreenState extends State<LoginScreen> {
     return ApiConfig.androidDeviceBaseUrl;
   }
 
+  bool _isValidEmail(String v) => RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(v);
+
   void _switchAuthMode(AuthMode mode) {
-    setState(() {
-      _authMode = mode;
-      _errorMessage = null;
-    });
+    setState(() => _authMode = mode);
   }
 
   void _switchOwnerMode(OwnerMode mode) {
-    setState(() {
-      _ownerMode = mode;
-      _errorMessage = null;
-    });
+    setState(() => _ownerMode = mode);
   }
 
   Future<void> _authenticateAndGo(String email, String password) async {
@@ -130,19 +126,24 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _submitOwnerSignIn() async {
     if (!_ownerSignInFormKey.currentState!.validate()) return;
+    final email = _ownerEmailController.text.trim();
+    if (!_isValidEmail(email)) {
+      showToast(context, 'Enter a valid email address', type: ToastType.error);
+      return;
+    }
+    if (_ownerPasswordController.text.isEmpty) {
+      showToast(context, 'Enter your password', type: ToastType.error);
+      return;
+    }
 
     setState(() {
       _isSubmitting = true;
-      _errorMessage = null;
     });
 
     try {
-      await _authenticateAndGo(
-        _ownerEmailController.text.trim(),
-        _ownerPasswordController.text,
-      );
+      await _authenticateAndGo(email, _ownerPasswordController.text);
     } catch (error) {
-      setState(() => _errorMessage = error.toString());
+      showToast(context, '$error', type: ToastType.error);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -150,16 +151,31 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _submitOwnerSignUp() async {
     if (!_ownerSignUpFormKey.currentState!.validate()) return;
+    final email = _ownerSignUpEmailController.text.trim();
+    if (!_isValidEmail(email)) {
+      showToast(context, 'Enter a valid email address', type: ToastType.error);
+      return;
+    }
+    if (_ownerSignUpPasswordController.text.length < 6) {
+      showToast(context, 'Password must be at least 6 characters', type: ToastType.error);
+      return;
+    }
+    if (_orgNameController.text.trim().isEmpty) {
+      showToast(context, 'Enter your organization name', type: ToastType.error);
+      return;
+    }
+    if (_ownerNameController.text.trim().isEmpty) {
+      showToast(context, 'Enter your name', type: ToastType.error);
+      return;
+    }
 
     setState(() {
       _isSubmitting = true;
-      _errorMessage = null;
     });
 
     final baseUrl = _baseUrlController.text.trim();
     final orgName = _orgNameController.text.trim();
     final ownerName = _ownerNameController.text.trim();
-    final email = _ownerSignUpEmailController.text.trim();
     final password = _ownerSignUpPasswordController.text;
 
     try {
@@ -173,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       await _authenticateAndGo(email, password);
     } catch (error) {
-      setState(() => _errorMessage = error.toString());
+      showToast(context, '$error', type: ToastType.error);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -181,19 +197,24 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _submitEmployee() async {
     if (!_employeeFormKey.currentState!.validate()) return;
+    final email = _employeeEmailController.text.trim();
+    if (!_isValidEmail(email)) {
+      showToast(context, 'Enter a valid email address', type: ToastType.error);
+      return;
+    }
+    if (_employeePasswordController.text.isEmpty) {
+      showToast(context, 'Enter your password', type: ToastType.error);
+      return;
+    }
 
     setState(() {
       _isSubmitting = true;
-      _errorMessage = null;
     });
 
     try {
-      await _authenticateAndGo(
-        _employeeEmailController.text.trim(),
-        _employeePasswordController.text,
-      );
+      await _authenticateAndGo(email, _employeePasswordController.text);
     } catch (error) {
-      setState(() => _errorMessage = error.toString());
+      showToast(context, '$error', type: ToastType.error);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -201,15 +222,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _submitCustomer() async {
     if (!_customerFormKey.currentState!.validate()) return;
+    final email = _customerEmailController.text.trim();
+    if (!_isValidEmail(email)) {
+      showToast(context, 'Enter a valid email address', type: ToastType.error);
+      return;
+    }
 
     setState(() {
       _isSubmitting = true;
-      _errorMessage = null;
     });
 
     final session = AppSessionScope.of(context);
     final baseUrl = _baseUrlController.text.trim();
-    final email = _customerEmailController.text.trim();
 
     try {
       final api = TechFixApi(baseUrl: baseUrl, email: email, password: '');
@@ -225,7 +249,7 @@ class _LoginScreenState extends State<LoginScreen> {
         MaterialPageRoute(builder: (_) => const HomeShell()),
       );
     } catch (error) {
-      setState(() => _errorMessage = error.toString());
+      showToast(context, '$error', type: ToastType.error);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -438,6 +462,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 label: 'Email',
                                 value: _ownerEmailController.text,
                                 onChanged: (v) => _ownerEmailController.text = v,
+                                keyboardType: TextInputType.emailAddress,
                                 icon: Icons.mail,
                                 textInputAction: TextInputAction.next,
                               ),
@@ -446,6 +471,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 label: 'Password',
                                 value: _ownerPasswordController.text,
                                 onChanged: (v) => _ownerPasswordController.text = v,
+                                obscureText: true,
                                 icon: Icons.lock,
                                 textInputAction: TextInputAction.done,
                                 onSubmitted: (_) => _submit(),
@@ -480,6 +506,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 label: 'Email',
                                 value: _ownerSignUpEmailController.text,
                                 onChanged: (v) => _ownerSignUpEmailController.text = v,
+                                keyboardType: TextInputType.emailAddress,
                                 icon: Icons.mail,
                                 textInputAction: TextInputAction.next,
                               ),
@@ -488,6 +515,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 label: 'Password',
                                 value: _ownerSignUpPasswordController.text,
                                 onChanged: (v) => _ownerSignUpPasswordController.text = v,
+                                obscureText: true,
                                 icon: Icons.lock,
                                 textInputAction: TextInputAction.done,
                                 onSubmitted: (_) => _submit(),
@@ -506,6 +534,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 label: 'Email',
                                 value: _employeeEmailController.text,
                                 onChanged: (v) => _employeeEmailController.text = v,
+                                keyboardType: TextInputType.emailAddress,
                                 icon: Icons.mail,
                                 textInputAction: TextInputAction.next,
                               ),
@@ -514,6 +543,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 label: 'Password',
                                 value: _employeePasswordController.text,
                                 onChanged: (v) => _employeePasswordController.text = v,
+                                obscureText: true,
                                 icon: Icons.lock,
                                 textInputAction: TextInputAction.done,
                                 onSubmitted: (_) => _submit(),
@@ -555,6 +585,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             label: 'Email',
                             value: _customerEmailController.text,
                             onChanged: (v) => _customerEmailController.text = v,
+                            keyboardType: TextInputType.emailAddress,
                             icon: Icons.mail,
                             placeholder: 'Email on your ticket',
                             textInputAction: TextInputAction.done,
@@ -615,17 +646,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
 
                       // Error message
-                      if (_errorMessage != null) ...[
-                        const SizedBox(height: 12),
-                        Text(
-                          _errorMessage!,
-                          style: const TextStyle(
-                            
-                            fontSize: 12,
-                            color: AppTheme.coral,
-                          ),
-                        ),
-                      ],
+
                     ],
                   ),
                 ),

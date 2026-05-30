@@ -13,6 +13,7 @@ import 'package:techfix/widgets/job_card.dart';
 import 'package:techfix/widgets/loading_state.dart';
 import 'package:techfix/models/inventory_usage.dart';
 import 'package:techfix/widgets/sheet.dart';
+import 'package:techfix/widgets/toast.dart';
 
 // ─────────────────────────────────────────────────────────────
 // StatusRadioDialog — styled radio selection for status
@@ -350,7 +351,7 @@ class _CreateJobSheetState extends State<CreateJobSheet> {
   bool get _valid {
     if (_step == 0) return _f['cEmail']!.isNotEmpty && _f['cName']!.isNotEmpty;
     if (_step == 1) return _f['brand']!.isNotEmpty && _f['model']!.isNotEmpty;
-    return _f['desc']!.isNotEmpty && _f['cost']!.isNotEmpty;
+    return _f['desc']!.isNotEmpty && _f['cost']!.isNotEmpty && double.tryParse(_f['cost']!) != null;
   }
 
   void _next() {
@@ -456,6 +457,7 @@ class _CreateJobSheetState extends State<CreateJobSheet> {
       icon: Icons.mail,
       value: _f['cEmail'],
       onChanged: (v) => _set('cEmail', v),
+      keyboardType: TextInputType.emailAddress,
       autoFocus: true,
     ),
     const SizedBox(height: 12),
@@ -471,6 +473,7 @@ class _CreateJobSheetState extends State<CreateJobSheet> {
       icon: Icons.call,
       value: _f['cPhone'],
       onChanged: (v) => _set('cPhone', v),
+      keyboardType: TextInputType.phone,
     ),
     const SizedBox(height: 12),
     Container(
@@ -590,6 +593,7 @@ class _CreateJobSheetState extends State<CreateJobSheet> {
       icon: Icons.payments,
       value: _f['cost'],
       onChanged: (v) => _set('cost', v),
+      keyboardType: TextInputType.number,
       suffix: const Text(
         'USD',
         style: TextStyle(
@@ -686,7 +690,7 @@ class _LogPartSheetState extends State<LogPartSheet> {
   final _nameCtl = TextEditingController();
   final _costCtl = TextEditingController();
 
-  bool get _valid => _jobId != null && _nameCtl.text.isNotEmpty && _costCtl.text.isNotEmpty;
+  bool get _valid => _jobId != null && _nameCtl.text.isNotEmpty && double.tryParse(_costCtl.text) != null;
 
   @override
   void initState() {
@@ -810,6 +814,7 @@ class _LogPartSheetState extends State<LogPartSheet> {
             icon: Icons.payments,
             value: _costCtl.text,
             onChanged: (v) { _costCtl.text = v; setState(() {}); },
+            keyboardType: TextInputType.number,
             suffix: const Text(
               'USD',
               style: TextStyle(
@@ -1201,15 +1206,11 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
     ).updateRepairJobStatus(jobId: jobId, status: status).then((_) {
       _refresh();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Marked ${AppTheme.statusLabel(status)}')),
-        );
+        showToast(context, 'Marked ${AppTheme.statusLabel(status)}');
       }
     }).catchError((e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.coral),
-        );
+        showToast(context, 'Error: $e', type: ToastType.error);
       }
     });
   }
@@ -1224,15 +1225,11 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
     api.updateJobDescription(jobId: jobId, description: patch['description'] as String).then((_) {
       _refresh();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Job updated')),
-        );
+        showToast(context, 'Job updated');
       }
     }).catchError((e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.coral),
-        );
+        showToast(context, 'Error: $e', type: ToastType.error);
       }
     });
   }
@@ -1265,17 +1262,14 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
         estimatedCost: double.tryParse(f['cost']!) ?? 0,
       );
 
-      _refresh();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Job created!')),
-        );
+        setState(() { _dialogType = null; _dialogJob = null; });
+        _refresh();
+        showToast(context, 'Job created!');
       }
     })().catchError((e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.coral),
-        );
+        showToast(context, 'Error: $e', type: ToastType.error);
       }
     });
   }
@@ -1293,17 +1287,14 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
       partName: p['name'] as String,
       partCost: p['cost'] as double,
     ).then((_) {
-      _refresh();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Part logged!')),
-        );
+        setState(() { _dialogType = null; _dialogJob = null; });
+        _refresh();
+        showToast(context, 'Part logged!');
       }
     }).catchError((e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.coral),
-        );
+        showToast(context, 'Error: $e', type: ToastType.error);
       }
     });
   }

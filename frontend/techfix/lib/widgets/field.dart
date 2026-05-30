@@ -13,6 +13,7 @@ class Field extends StatefulWidget {
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onSubmitted;
+  final bool obscureText;
   final Widget? suffix;
 
   const Field({
@@ -28,6 +29,7 @@ class Field extends StatefulWidget {
     this.keyboardType,
     this.textInputAction,
     this.onSubmitted,
+    this.obscureText = false,
     this.suffix,
   });
 
@@ -104,6 +106,7 @@ class _FieldState extends State<Field> {
       autofocus: widget.autoFocus,
       keyboardType: widget.keyboardType,
       textInputAction: widget.textInputAction,
+      obscureText: widget.obscureText,
       decoration: InputDecoration(
         border: InputBorder.none,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14),

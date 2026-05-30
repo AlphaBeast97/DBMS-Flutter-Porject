@@ -6,7 +6,7 @@ Flutter UI consuming the TechFix backend API.
 
 ## Status
 
-Phase 3 complete.
+Phase 4 complete. Phase 5 (UX Polish) in progress.
 
 ## Notes
 
@@ -18,3 +18,7 @@ Phase 3 complete.
 - Login screen has 3 tabs: Owner (Sign In + Sign Up), Employee (Sign In), Customer (Sign In).
 - Owner Sign Up creates org + owner via public POST /api/employees/owner, then auto-authenticates.
 - AppSession.isOwner getter added for convenience.
+- Toast utility: showToast(context, msg, type: ToastType.success|error) — floating dark snackbar from bottom with rounded corners.
+- All action feedback uses showToast: job status, job created, job updated, part logged, technician added, job cancelled, plus all error states.
+- Field widget supports keyboardType, obscureText, textInputAction, onSubmitted.
+- Input validation on all forms: email regex, password min length, cost numeric parse, required field checks.

@@ -73,11 +73,13 @@ class LoadingState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: List.generate(count, (i) => const Padding(
-        padding: EdgeInsets.only(bottom: 12),
-        child: SkeletonCard(),
-      )),
+    return SingleChildScrollView(
+      child: Column(
+        children: List.generate(count, (i) => const Padding(
+          padding: EdgeInsets.only(bottom: 12),
+          child: SkeletonCard(),
+        )),
+      ),
     );
   }
 }

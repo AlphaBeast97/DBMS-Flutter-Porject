@@ -10,6 +10,7 @@ import 'package:techfix/widgets/empty_state.dart';
 import 'package:techfix/widgets/error_state.dart';
 import 'package:techfix/widgets/loading_state.dart';
 import 'package:techfix/widgets/pill.dart';
+import 'package:techfix/widgets/toast.dart';
 import 'package:techfix/widgets/section_header.dart';
 import 'package:techfix/widgets/stat_card.dart';
 import 'package:techfix/widgets/status_badge.dart';
@@ -84,9 +85,7 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
       ).cancelRepairJob(jobId);
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Job cancelled successfully.')),
-      );
+      showToast(context, 'Job cancelled successfully.');
 
       setState(() {
         if (_isCustomerRole) {
@@ -105,9 +104,7 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
       });
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Cancel failed: $error'), backgroundColor: AppTheme.coral),
-      );
+      showToast(context, 'Cancel failed: $error', type: ToastType.error);
     }
   }
 

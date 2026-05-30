@@ -70,6 +70,7 @@ Status: IMPLEMENTED IN PHASE 2
 - [x] Phase 2: Express API
 - [x] Phase 3: Flutter UI & API Integration (completed)
 - [x] Phase 4: Claude Design UI Implementation (completed)
+- [ ] Phase 5: UX Polish & Bug Fixes (in progress)
 
 ## Decisions Log
 
@@ -150,6 +151,24 @@ Status: IMPLEMENTED IN PHASE 2
 - New widget files added: avatar.dart, field.dart, status_badge.dart, techfix_dialog.dart, sheet.dart, empty_state.dart, loading_state.dart, error_state.dart, pill.dart.
 - Refactored widget files: stat_card.dart, section_header.dart, app_background.dart, job_card.dart, inventory_card.dart.
 
+### Phase 5 (in progress)
+
+- Removed all 88 hardcoded `fontFamily: 'SpaceGrotesk'` from TextStyles — theme default now covers it via `GoogleFonts.spaceGroteskTextTheme`.
+- Login screen: wrapped in Scaffold with `resizeToAvoidBottomInset: true` for keyboard handling; added Enter-to-submit via `textInputAction`/`onSubmitted` on all Field inputs.
+- Customer screen: fixed overflow by wrapping Pill in Flexible, shortened member date with formatter.
+- Technician screen: fixed setState async bug — `_refresh()` now splits assignment from setState; dialogs close after create job / log part.
+- JobCard: fixed IntrinsicHeight overflow by restructuring Card — AnimatedSize placed outside IntrinsicHeight.
+- Backend: fixed `getRepairJobs` 500 error — always passes 3 params `[employeeId, status, organizationId]`; fixed status update 400 error by normalizing to PascalCase before WRITE_STATUSES check.
+- Fixed "logged by unknown" — added LEFT JOIN employees + `e.name AS employee_name` to both `sp_get_customer_full_*` stored procedures.
+- Fixed AddStaffDialog/LogPartSheet buttons always disabled — added `setState((){})` to onChanged callbacks.
+- Manager screen: removed Active Staff / Avg Turnaround KPIs, added paginated jobs list (latest 5, "Show more") with inventory usage; wrapped LoadingState in SingleChildScrollView.
+- Fixed LoadingState overflow — wrapped Column in SingleChildScrollView.
+- **Input validation**: Added `_isValidEmail` regex + inline checks in all login submit methods (email format, password required, min 6 chars, required fields).
+- **Keyboard types**: Added `TextInputType.emailAddress` on email fields, `TextInputType.phone` on phone, `TextInputType.number` on cost fields across all screens.
+- **Password obscuring**: Added `obscureText: true` on all password fields.
+- **Validation getters**: Updated `_valid` in CreateJobSheet (cost must be parseable as double), LogPartSheet (cost must be parseable), AddStaffDialog (email regex + password ≥ 6 chars).
+- **Toast system**: Created `lib/widgets/toast.dart` with `showToast()` utility — floating dark/coral snackbar from bottom with rounded corners. Replaced all 12 raw SnackBar calls across technician, manager, and customer screens.
+
 ## Final Summary
 
-Status: PHASE 4 COMPLETE (Claude Design UI implementation across all screens)
+Status: PHASE 4 COMPLETE — Phase 5 UX Polish in progress
