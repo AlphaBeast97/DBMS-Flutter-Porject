@@ -294,9 +294,15 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
 
   /// Show dialog to create a new repair job
   void _showCreateJobDialog() {
-    final deviceIdController = TextEditingController();
     final descriptionController = TextEditingController();
     final estimatedCostController = TextEditingController();
+    final customerEmailController = TextEditingController();
+    final customerNameController = TextEditingController();
+    final customerPhoneController = TextEditingController();
+    final deviceBrandController = TextEditingController();
+    final deviceModelController = TextEditingController();
+    final deviceSerialController = TextEditingController();
+    String? deviceTypeValue;
     final formKey = GlobalKey<FormState>();
     bool isSubmitting = false;
 
@@ -311,20 +317,104 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // (Device ID field removed — device will be created automatically)
+                  // Customer contact - will create customer if not exist
                   TextFormField(
-                    controller: deviceIdController,
-                    keyboardType: TextInputType.number,
+                    controller: customerEmailController,
+                    keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(
-                      labelText: 'Device ID',
-                      hintText: 'Enter device ID',
+                      labelText: 'Customer email *',
+                      hintText: 'customer@example.com',
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Device ID required';
+                        return 'Customer email required';
                       }
-                      if (int.tryParse(value) == null) {
-                        return 'Must be a number';
+                      if (!RegExp(
+                        r"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+                      ).hasMatch(value)) {
+                        return 'Must be a valid email';
                       }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: customerNameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Customer name *',
+                      hintText: 'Full name (required)',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty)
+                        return 'Name required';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: customerPhoneController,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(
+                      labelText: 'Customer phone *',
+                      hintText: 'e.g., 03001234567',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty)
+                        return 'Phone required';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  // Device fields - will be created automatically
+                  DropdownButtonFormField<String>(
+                    value: deviceTypeValue,
+                    items: ['Laptop', 'Mobile', 'Console', 'Tablet', 'Other']
+                        .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                        .toList(),
+                    onChanged: (v) => setState(() => deviceTypeValue = v),
+                    decoration: const InputDecoration(
+                      labelText: 'Device type *',
+                    ),
+                    validator: (v) =>
+                        v == null || v.isEmpty ? 'Type required' : null,
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: deviceBrandController,
+                    decoration: const InputDecoration(
+                      labelText: 'Brand *',
+                      hintText: 'e.g., Samsung',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty)
+                        return 'Brand required';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: deviceModelController,
+                    decoration: const InputDecoration(
+                      labelText: 'Model *',
+                      hintText: 'e.g., Galaxy S20',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty)
+                        return 'Model required';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: deviceSerialController,
+                    decoration: const InputDecoration(
+                      labelText: 'Serial number *',
+                      hintText: 'Device serial number',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty)
+                        return 'Serial required';
                       return null;
                     },
                   ),
@@ -386,12 +476,35 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
                           password: session.password,
                         );
 
-                        final deviceId = int.parse(deviceIdController.text);
+                        final email = customerEmailController.text.trim();
+                        final name = customerNameController.text.trim();
+                        final phone = customerPhoneController.text.trim();
+                        final deviceType = deviceTypeValue ?? 'Other';
+                        final brand = deviceBrandController.text.trim();
+                        final model = deviceModelController.text.trim();
+                        final serial = deviceSerialController.text.trim();
                         final description = descriptionController.text;
                         final estimatedCost = double.parse(
                           estimatedCostController.text,
                         );
 
+                        // Create customer
+                        final customerId = await api.createCustomer(
+                          name: name.isEmpty ? email.split('@').first : name,
+                          phone: phone.isEmpty ? '0000000000' : phone,
+                          email: email,
+                        );
+
+                        // Create device for customer
+                        final deviceId = await api.createDevice(
+                          customerId: customerId,
+                          type: deviceType,
+                          brand: brand,
+                          model: model,
+                          serialNumber: serial,
+                        );
+
+                        // Create repair job
                         await api.createRepairJob(
                           deviceId: deviceId,
                           description: description,
