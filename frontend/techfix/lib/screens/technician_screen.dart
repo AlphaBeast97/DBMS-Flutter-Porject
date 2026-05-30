@@ -17,6 +17,9 @@ class TechnicianScreen extends StatefulWidget {
 
 class _TechnicianScreenState extends State<TechnicianScreen> {
   late Future<List<RepairJob>> _jobsFuture;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  static const int _displayLimit = 5;
 
   @override
   void initState() {
@@ -29,6 +32,12 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
     super.didChangeDependencies();
     // Safe to access AppSessionScope here, after InheritedWidget is built
     _jobsFuture = _loadJobs();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<List<RepairJob>> _loadJobs() async {
@@ -76,6 +85,12 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
   void _refresh() {
     setState(() {
       _jobsFuture = _loadJobs();
+    });
+  }
+
+  void _performSearch() {
+    setState(() {
+      _searchQuery = _searchController.text.trim();
     });
   }
 
@@ -780,6 +795,31 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
             onAction: _refresh,
           ),
           const SizedBox(height: 12),
+          // Search field for jobs (executes only when search button clicked)
+          TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: 'Search jobs by device, customer, id, or status',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: () {
+                      _searchController.clear();
+                      _performSearch();
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.search),
+                    onPressed: _performSearch,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
           FutureBuilder<List<RepairJob>>(
             future: _jobsFuture,
             builder: (context, snapshot) {
@@ -810,37 +850,99 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
                 );
               }
 
-              final jobs = snapshot.data!
-                  .where(
-                    (job) =>
-                        job.status.toLowerCase() == 'pending' ||
-                        job.status.toLowerCase() == 'repairing',
-                  )
-                  .toList();
+              final session = AppSessionScope.of(context);
+              final role = (session.employee?['role'] ?? '').toString();
 
-              if (jobs.isEmpty) {
+              // Start from all jobs sorted by createdAt desc
+              final allJobs = snapshot.data!.toList()
+                ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+              // Owners and managers should see all jobs; technicians see active queue
+              final filteredByRole = (role == 'Owner' || role == 'Manager')
+                  ? allJobs
+                  : allJobs
+                        .where(
+                          (job) =>
+                              job.status.toLowerCase() == 'pending' ||
+                              job.status.toLowerCase() == 'repairing',
+                        )
+                        .toList();
+
+              // Apply search filter if present. Run only when user hits search.
+              final queryRaw = _searchQuery.trim();
+              final q = queryRaw.toLowerCase();
+              late final List<RepairJob> searched;
+
+              if (q.isEmpty) {
+                searched = filteredByRole;
+              } else {
+                // If the user entered a numeric id, prefer exact id match
+                int? id;
+                try {
+                  id = int.parse(q);
+                } catch (_) {
+                  id = null;
+                }
+
+                if (id != null) {
+                  searched = filteredByRole
+                      .where((job) => job.id == id)
+                      .toList();
+                } else {
+                  // Try exact field matches first (device label, customer name, status)
+                  final exact = filteredByRole.where((job) {
+                    return job.deviceLabel.toLowerCase() == q ||
+                        job.customerName.toLowerCase() == q ||
+                        job.status.toLowerCase() == q;
+                  }).toList();
+
+                  if (exact.isNotEmpty) {
+                    searched = exact;
+                  } else {
+                    // Fallback to substring contains matching
+                    searched = filteredByRole.where((job) {
+                      final combined =
+                          ('${job.deviceLabel} ${job.customerName} ${job.id} ${job.status}')
+                              .toLowerCase();
+                      return combined.contains(q);
+                    }).toList();
+                  }
+                }
+              }
+
+              final totalCount = searched.length;
+              final displayedJobs = searched.take(_displayLimit).toList();
+
+              if (totalCount == 0) {
                 return Text(
                   'No open jobs right now.',
                   style: Theme.of(context).textTheme.bodySmall,
                 );
               }
 
-              final usagesFuture = _fetchUsagesForJobs(jobs);
+              final usagesFuture = _fetchUsagesForJobs(displayedJobs);
 
               return FutureBuilder<Map<int, List<InventoryUsage>>>(
                 future: usagesFuture,
                 builder: (context, usagesSnap) {
                   final usagesMap = usagesSnap.data ?? {};
                   return Column(
-                    children: jobs.map((job) {
-                      final usages = usagesMap[job.id] ?? [];
-                      return JobCard(
-                        job: job,
-                        onTap: () => _showUpdateStatusDialog(job),
-                        onEdit: () => _showEditDescriptionDialog(job),
-                        usages: usages,
-                      );
-                    }).toList(),
+                    children: [
+                      ...displayedJobs.map((job) {
+                        final usages = usagesMap[job.id] ?? [];
+                        return JobCard(
+                          job: job,
+                          onTap: () => _showUpdateStatusDialog(job),
+                          onEdit: () => _showEditDescriptionDialog(job),
+                          usages: usages,
+                        );
+                      }).toList(),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Showing ${displayedJobs.length} of $totalCount jobs',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
                   );
                 },
               );
