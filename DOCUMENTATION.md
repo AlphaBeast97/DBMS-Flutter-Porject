@@ -36,7 +36,7 @@ graph TB
     RT --> CT
     MW -.-> RT
     CT --> CP
-    CP -->|CALL sp_name()| SP
+    CP -->|"CALL sp_name()"| SP
     SP --> TB
     FN --> TR
     TR --> TB
@@ -287,13 +287,13 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    REQ[Request] --> CORS[cors()]
-    CORS --> JSON[express.json()]
-    JSON --> AUTH_CHECK{Requires auth?}
+    REQ[Request] --> CORS["cors()"]
+    CORS --> JSON["express.json()"]
+    JSON --> AUTH_CHECK{"Requires auth?"}
 
-    AUTH_CHECK -->|Yes| EMP_AUTH[employeeAuth\nmiddleware]
-    AUTH_CHECK -->|Owner-only| OWN_AUTH[employeeAuth\nroles=[Owner]]
-    AUTH_CHECK -->|Customer| CUST_AUTH[customerAuth\nmiddleware]
+    AUTH_CHECK -->|Yes| EMP_AUTH[employeeAuth middleware]
+    AUTH_CHECK -->|Owner-only| OWN_AUTH[employeeAuth roles=Owner]
+    AUTH_CHECK -->|Customer| CUST_AUTH[customerAuth middleware]
     AUTH_CHECK -->|Public| PUBLIC[skip auth]
 
     EMP_AUTH --> ROUTE_HANDLER[Route Handler]
