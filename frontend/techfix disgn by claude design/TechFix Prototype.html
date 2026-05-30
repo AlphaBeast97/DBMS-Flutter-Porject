@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TechFix — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet" />
+<style>
+  * { -webkit-font-smoothing: antialiased; box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    background: #E8E3DA;
+    background-image: radial-gradient(circle at 1px 1px, rgba(20,20,20,0.05) 1px, transparent 0);
+    background-size: 22px 22px;
+    color: #141414;
+    overflow: hidden;
+  }
+  .msr {
+    font-family: 'Material Symbols Rounded';
+    font-weight: normal; font-style: normal; display: inline-block;
+    line-height: 1; letter-spacing: normal; white-space: nowrap;
+    word-wrap: normal; direction: ltr; user-select: none;
+    font-feature-settings: 'liga' 1; -webkit-font-feature-settings: 'liga' 1;
+    text-rendering: optimizeLegibility;
+  }
+  button { font-family: 'Space Grotesk', sans-serif; }
+  input, textarea { font-family: 'Space Grotesk', sans-serif; }
+  ::-webkit-scrollbar { width: 0; height: 0; }
+  input::placeholder, textarea::placeholder { color: rgba(20,20,20,0.36); }
+
+  .shimmer {
+    background: linear-gradient(90deg, rgba(20,20,20,0.06) 25%, rgba(20,20,20,0.12) 37%, rgba(20,20,20,0.06) 63%);
+    background-size: 400% 100%; animation: shimmer 1.4s ease infinite;
+  }
+  @keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes popIn { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+  /* prototype chrome */
+  .ctrl-bar {
+    position: fixed; top: 0; left: 0; right: 0; height: 60px; z-index: 100;
+    display: flex; align-items: center; gap: 18px; padding: 0 20px;
+    background: rgba(247,243,237,0.86); backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(20,20,20,0.08);
+  }
+  .ctrl-group { display: flex; align-items: center; gap: 6px; }
+  .ctrl-label { font-size: 11px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; color: rgba(20,20,20,0.4); margin-right: 4px; }
+  .seg { display: flex; background: #fff; border: 1px solid rgba(20,20,20,0.12); border-radius: 100px; padding: 3px; }
+  .seg button {
+    border: none; background: none; cursor: pointer; border-radius: 100px;
+    padding: 7px 13px; font-size: 13px; font-weight: 600; color: rgba(20,20,20,0.55);
+    display: inline-flex; align-items: center; gap: 6px; transition: all .15s;
+  }
+  .seg button.on { color: #fff; }
+  .stage { position: fixed; top: 60px; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="frames/android-frame.jsx"></script>
+<script type="text/babel" src="src/ds-core.jsx"></script>
+<script type="text/babel" src="src/ds-cards.jsx"></script>
+<script type="text/babel" src="src/data.jsx"></script>
+<script type="text/babel" src="src/screens-login.jsx"></script>
+<script type="text/babel" src="src/screens-customer.jsx"></script>
+<script type="text/babel" src="src/screens-technician.jsx"></script>
+<script type="text/babel" src="src/screens-manager.jsx"></script>
+<script type="text/babel" src="src/app.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const ROLE_META = {
+  owner:    { label: 'Owner',    color: COLORS.coral },
+  employee: { label: 'Employee', color: COLORS.teal },
+  customer: { label: 'Customer', color: COLORS.sky },
+};
+const STATE_META = [
+  { key: 'loaded',  label: 'Loaded',  icon: 'check_circle' },
+  { key: 'empty',   label: 'Empty',   icon: 'inbox' },
+  { key: 'loading', label: 'Loading', icon: 'hourglass_top' },
+  { key: 'error',   label: 'Error',   icon: 'error' },
+];
+
+function DeviceStage({ children }) {
+  const wrapRef = useRef(null);
+  const [scale, setScale] = useState(1);
+  const DEV_W = 412, DEV_H = 892;
+  useEffect(() => {
+    const fit = () => {
+      const availH = window.innerHeight - 60 - 48;
+      const availW = window.innerWidth - 48;
+      setScale(Math.min(1, availH / DEV_H, availW / DEV_W));
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, []);
+  return (
+    <div ref={wrapRef} style={{ width: DEV_W * scale, height: DEV_H * scale }}>
+      <div style={{ width: DEV_W, height: DEV_H, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function Root() {
+  const [authed, setAuthed] = useState(false);
+  const [role, setRole] = useState('owner');
+  const [screenState, setScreenState] = useState('loaded');
+
+  return (
+    <React.Fragment>
+      <div className="ctrl-bar">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginRight: 4 }}>
+          <Brandmark size={30} />
+          <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: -0.3 }}>TechFix</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(20,20,20,0.4)', background: '#fff', border: '1px solid rgba(20,20,20,0.1)', borderRadius: 100, padding: '2px 8px' }}>Prototype</span>
+        </div>
+
+        <div className="ctrl-group">
+          <span className="ctrl-label">Role</span>
+          <div className="seg">
+            {Object.entries(ROLE_META).map(([k, m]) => (
+              <button key={k} className={role === k ? 'on' : ''} style={role === k ? { background: m.color } : {}}
+                onClick={() => { setRole(k); setAuthed(true); }}>
+                {m.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="ctrl-group">
+          <span className="ctrl-label">State</span>
+          <div className="seg">
+            {STATE_META.map(s => (
+              <button key={s.key} className={screenState === s.key ? 'on' : ''} style={screenState === s.key ? { background: COLORS.ink } : {}}
+                onClick={() => setScreenState(s.key)}>
+                <span className="msr" style={{ fontSize: 16 }}>{s.icon}</span>{s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ flex: 1 }} />
+        <button className="seg" style={{ padding: '8px 14px', cursor: 'pointer', color: COLORS.ink, fontWeight: 600, fontSize: 13, gap: 7, alignItems: 'center', display: 'inline-flex' }}
+          onClick={() => setAuthed(a => !a)}>
+          <span className="msr" style={{ fontSize: 17 }}>{authed ? 'logout' : 'login'}</span>
+          {authed ? 'Show login' : 'Enter app'}
+        </button>
+      </div>
+
+      <div className="stage">
+        <DeviceStage>
+          <AndroidDevice surface={COLORS.cream}>
+            {authed
+              ? <HomeShell role={role} screenState={screenState} onLogout={() => setAuthed(false)} />
+              : <LoginScreen onSignIn={(r) => { setRole(r); setAuthed(true); }} />}
+          </AndroidDevice>
+        </DeviceStage>
+      </div>
+    </React.Fragment>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Root />);
+</script>
+</body>
+</html>
