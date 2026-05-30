@@ -78,6 +78,7 @@ Status: IMPLEMENTED IN PHASE 2
 - Introduced organizations and employees with role-based access; customers can cancel only when status is Pending.
 - sp_get_repair_jobs accepts optional 3rd p_org_id param: when provided returns org-wide jobs (manager view), when null filters by created_by_employee_id (technician view).
 - Frontend TechFixApi.getRepairJobs() accepts optional organizationId to support the manager dashboard.
+- Login screen split into 3 tabs (Owner/Employee/Customer) with Owner tab offering both Sign In and Sign Up (create org + owner account).
 
 ## Blockers
 
@@ -130,6 +131,10 @@ Status: IMPLEMENTED IN PHASE 2
 - Added p_org_id param to sp_get_repair_jobs for org-wide manager dashboard view.
 - Manager screen passes organization_id to API to fetch all jobs for dashboard.
 - Mock data file preserved but unused.
+- Login screen redesigned with 3 tabs (Owner/Employee/Customer).
+- Owner tab has Sign In/Sign Up toggle — Sign Up calls POST /api/employees/owner to create org + owner account.
+- TechFixApi.createOwner() added for public owner registration.
+- AppSession.isOwner getter added.
 
 ### Phase 4
 

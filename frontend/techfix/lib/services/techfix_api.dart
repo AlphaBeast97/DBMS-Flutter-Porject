@@ -278,6 +278,33 @@ class TechFixApi {
 
   // ========== EMPLOYEES ==========
 
+  /// POST /api/employees/owner - Create owner + organization (public, no auth)
+  Future<Map<String, dynamic>> createOwner({
+    required String organizationName,
+    required String ownerName,
+    required String ownerEmail,
+    required String password,
+  }) async {
+    final headers = {'Content-Type': 'application/json'};
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/employees/owner'),
+      headers: headers,
+      body: jsonEncode({
+        'organization_name': organizationName,
+        'owner_name': ownerName,
+        'owner_email': ownerEmail,
+        'password': password,
+      }),
+    );
+
+    if (response.statusCode != 201) {
+      throw Exception(_getErrorMessage(response.statusCode, response.body));
+    }
+
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    return body['data'] as Map<String, dynamic>;
+  }
+
   /// POST /api/employees - Create a new employee (Owner/Manager only)
   Future<int> createEmployee({
     required String name,

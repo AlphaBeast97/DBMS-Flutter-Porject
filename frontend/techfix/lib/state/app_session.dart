@@ -17,6 +17,7 @@ class AppSession extends ChangeNotifier {
   Map<String, dynamic>? get employee => _employee;
 
   bool get isAuthenticated => _employee != null;
+  bool get isOwner => _employee?['role'] == 'Owner';
 
   void updateCredentials({
     required String baseUrl,
