@@ -1,3 +1,16 @@
+/// Technician screen — the main workspace for repair staff.
+///
+/// Shows a searchable, filterable list of active (Pending/Repairing) jobs.
+/// Each job card has action buttons for:
+/// - Updating status (via [StatusRadioDialog])
+/// - Editing description (via [EditDescDialog])
+/// - Cancelling the job
+///
+/// Floating action button opens [CreateJobSheet] (3-step wizard).
+/// AppBar action opens [LogPartSheet] to log parts against any job.
+///
+/// All dialogs/sheets are rendered as overlay widgets in a [Stack],
+/// managed by state variables ([_dialogType], [_dialogJob]).
 import 'package:flutter/material.dart';
 import 'package:techfix/models/repair_job.dart';
 import 'package:techfix/models/inventory_usage.dart';
@@ -17,9 +30,7 @@ import 'package:techfix/widgets/filter_chip.dart';
 import 'package:techfix/widgets/job_card.dart';
 import 'package:techfix/widgets/loading_state.dart';
 import 'package:techfix/widgets/toast.dart';
-// ─────────────────────────────────────────────────────────────
-// TechnicianScreen — main screen
-// ─────────────────────────────────────────────────────────────
+
 class TechnicianScreen extends StatefulWidget {
   const TechnicianScreen({super.key});
 
@@ -33,14 +44,10 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
   String _searchQuery = '';
   String _filter = 'all';
 
-  // Stores which dialog/sheet is open: type + optional job
+  // Dialog/sheet orchestration: _dialogType determines which overlay is shown,
+  // _dialogJob is the job being acted upon (null for create/logpart).
   String? _dialogType;
   RepairJob? _dialogJob;
-
-  @override
-  void initState() {
-    super.initState();
-  }
 
   @override
   void didChangeDependencies() {
@@ -54,6 +61,7 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
     super.dispose();
   }
 
+  /// Fetches all repair jobs for the authenticated employee.
   Future<List<RepairJob>> _loadJobs() async {
     final session = AppSessionScope.of(context);
     final api = TechFixApi(
@@ -65,6 +73,7 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
     return rows.map(RepairJob.fromApi).toList();
   }
 
+  /// Fetches inventory usage data for a list of jobs, grouped by job ID.
   Future<Map<int, List<InventoryUsage>>> _fetchUsagesForJobs(List<RepairJob> jobs) async {
     final s = AppSessionScope.of(context);
     final api = TechFixApi(
@@ -103,6 +112,7 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
                 ),
               ),
               actions: [
+                // Log part button (accessible from AppBar)
                 IconButton(
                   onPressed: () => setState(() {
                     _dialogType = 'logpart';
@@ -121,6 +131,7 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
               ],
             ),
             body: _buildBody(),
+            // FAB to create a new job
             floatingActionButton: FloatingActionButton.extended(
               onPressed: () => setState(() {
                 _dialogType = 'create';
@@ -137,7 +148,7 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
           ),
         ),
 
-        // Dialogs & Sheets
+        // --- Dialog/Sheet overlays ---
         if (_dialogType == 'status' && _dialogJob != null)
           StatusRadioDialog(
             job: _dialogJob!,
@@ -177,10 +188,12 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
     );
   }
 
+  /// Builds the main body: search bar, filter chips, and job list.
   Widget _buildBody() {
     return FutureBuilder<List<RepairJob>>(
       future: _jobsFuture,
       builder: (context, snapshot) {
+        // --- Loading state ---
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Padding(
             padding: EdgeInsets.fromLTRB(18, 4, 18, 0),
@@ -188,6 +201,7 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
           );
         }
 
+        // --- Error state ---
         if (snapshot.hasError) {
           return Padding(
             padding: const EdgeInsets.fromLTRB(18, 4, 18, 0),
@@ -199,11 +213,12 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
         }
 
         final allJobs = snapshot.data!;
-        // Technicians see only pending/repairing
+        // Technicians only see Pending and Repairing jobs
         final activeJobs = allJobs
             .where((j) => j.status.toLowerCase() == 'pending' || j.status.toLowerCase() == 'repairing')
             .toList();
 
+        // --- Empty state ---
         if (activeJobs.isEmpty) {
           return EmptyState(
             icon: Icons.construction,
@@ -215,7 +230,7 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
           );
         }
 
-        // Apply filter
+        // --- Apply filter ---
         var filtered = activeJobs;
         if (_filter == 'pending') {
           filtered = filtered.where((j) => j.status.toLowerCase() == 'pending').toList();
@@ -223,7 +238,7 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
           filtered = filtered.where((j) => j.status.toLowerCase() == 'repairing').toList();
         }
 
-        // Apply search
+        // --- Apply search ---
         final q = _searchQuery.toLowerCase();
         if (q.isNotEmpty) {
           filtered = filtered.where((j) {
@@ -234,7 +249,7 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
           }).toList();
         }
 
-        // Sort by newest first
+        // Sort newest first
         filtered.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
         final pendingCount = activeJobs.where((j) => j.status.toLowerCase() == 'pending').length;
@@ -243,7 +258,7 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
         return ListView(
           padding: const EdgeInsets.fromLTRB(18, 8, 18, 96),
           children: [
-            // Search
+            // --- Search bar ---
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -279,7 +294,7 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
             ),
             const SizedBox(height: 12),
 
-            // Filter chips
+            // --- Filter chips ---
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
@@ -312,6 +327,7 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
             ),
             const SizedBox(height: 16),
 
+            // --- Job list or "no results" state ---
             if (filtered.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 40),
@@ -331,7 +347,7 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
                 ),
               )
             else
-              // Fetch usages and render job cards
+              // Fetch usages and render JobCards
               FutureBuilder<Map<int, List<InventoryUsage>>>(
                 future: _fetchUsagesForJobs(filtered),
                 builder: (context, usagesSnap) {
@@ -370,6 +386,7 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
     );
   }
 
+  /// Calls API to update job status, then refreshes the list.
   void _updateJobStatus(int jobId, String status) {
     final session = AppSessionScope.of(context);
     TechFixApi(
@@ -388,6 +405,7 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
     });
   }
 
+  /// Calls API to update job description, then refreshes.
   void _updateJobDesc(int jobId, Map<String, dynamic> patch) {
     final session = AppSessionScope.of(context);
     final api = TechFixApi(
@@ -407,6 +425,8 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
     });
   }
 
+  /// Multi-step job creation: customer → device → repair job.
+  /// Each step calls the corresponding API endpoint sequentially.
   void _createJob(Map<String, String> f) {
     final session = AppSessionScope.of(context);
     final api = TechFixApi(
@@ -416,11 +436,13 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
     );
 
     (() async {
+      // Step 1: Create customer
       final email = f['cEmail']!;
       final name = f['cName']!;
       final phone = f['cPhone']!.isNotEmpty ? f['cPhone']! : '0000000000';
       final customerId = await api.createCustomer(name: name, phone: phone, email: email);
 
+      // Step 2: Create device under customer
       final deviceId = await api.createDevice(
         customerId: customerId,
         type: f['dType']!,
@@ -429,6 +451,7 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
         serialNumber: f['serial']!.isNotEmpty ? f['serial']! : 'N/A',
       );
 
+      // Step 3: Create repair job for device
       await api.createRepairJob(
         deviceId: deviceId,
         description: f['desc']!,
@@ -447,6 +470,7 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
     });
   }
 
+  /// Calls API to log a part against a job, then refreshes.
   void _logPart(Map<String, dynamic> p) {
     final session = AppSessionScope.of(context);
     final api = TechFixApi(
@@ -472,5 +496,3 @@ class _TechnicianScreenState extends State<TechnicianScreen> {
     });
   }
 }
-
-

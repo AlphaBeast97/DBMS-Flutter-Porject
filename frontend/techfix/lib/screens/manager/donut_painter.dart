@@ -1,3 +1,7 @@
+/// Custom painter for the donut/ring chart on the manager dashboard.
+///
+/// Draws colored arcs ([segments]) proportionally to their count,
+/// with rounded caps and a background ring.
 import 'package:flutter/material.dart';
 import 'package:techfix/theme/app_theme.dart';
 
@@ -16,6 +20,7 @@ class DonutPainter extends CustomPainter {
     final radius = (size.width - thickness) / 2;
     final rect = Rect.fromCircle(center: center, radius: radius);
 
+    // Background ring
     final bgPaint = Paint()
       ..color = AppTheme.line
       ..style = PaintingStyle.stroke
@@ -23,9 +28,10 @@ class DonutPainter extends CustomPainter {
 
     canvas.drawCircle(center, radius, bgPaint);
 
-    double startAngle = -1.5708;
+    // Colored arcs
+    double startAngle = -1.5708; // Start from top (-π/2)
     for (final seg in segments) {
-      final sweepAngle = (seg.count / total) * 6.28319;
+      final sweepAngle = (seg.count / total) * 6.28319; // 2π
       final paint = Paint()
         ..color = seg.color
         ..style = PaintingStyle.stroke
@@ -41,6 +47,7 @@ class DonutPainter extends CustomPainter {
   bool shouldRepaint(DonutPainter old) => segments != old.segments;
 }
 
+/// Small colored square + label for the legend below the donut chart.
 class LegendDot extends StatelessWidget {
   final Color color;
   final String label;

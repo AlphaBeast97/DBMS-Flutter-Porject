@@ -1,3 +1,8 @@
+/// Reusable modal dialog shell used across all confirmation/input dialogs.
+///
+/// [DialogScrim] — dark translucent scrim that captures taps to close.
+/// [TechFixDialog] — animated card with optional icon, title, child, and action buttons.
+/// Both use [TweenAnimationBuilder] for a subtle scale + fade entrance.
 import 'package:flutter/material.dart';
 import 'package:techfix/theme/app_theme.dart';
 

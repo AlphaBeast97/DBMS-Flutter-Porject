@@ -1,3 +1,10 @@
+/// Expandable job card with status, description, cost, and action buttons.
+///
+/// Shows a colored left border, device label, customer name, status badge,
+/// description, and estimated/final cost. Expand to see logged parts with
+/// subtotal. Action buttons (Status, Edit, Cancel) are rendered via
+/// [JobCard._ActionButton] and shown only when the corresponding callbacks
+/// are provided. Cancel is only visible for "Pending" jobs.
 import 'package:flutter/material.dart';
 import 'package:techfix/models/repair_job.dart';
 import 'package:techfix/theme/app_theme.dart';

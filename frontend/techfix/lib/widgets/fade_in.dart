@@ -1,3 +1,7 @@
+/// Staggered entrance animation for list items.
+///
+/// Fades in and slides up slightly. Accepts [delayMs] for cascading
+/// animations when rendering multiple items in a list.
 import 'package:flutter/material.dart';
 
 class FadeIn extends StatefulWidget {

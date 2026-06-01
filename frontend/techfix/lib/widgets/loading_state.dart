@@ -1,3 +1,8 @@
+/// Loading/skeleton placeholder for async data.
+///
+/// [LoadingState] renders a column of shimmer-animated skeleton cards.
+/// [SkeletonCard] draws a pulsing placeholder with a linear-gradient
+/// shimmer that sweeps left-to-right using [AnimationController].
 import 'package:flutter/material.dart';
 import 'package:techfix/theme/app_theme.dart';
 

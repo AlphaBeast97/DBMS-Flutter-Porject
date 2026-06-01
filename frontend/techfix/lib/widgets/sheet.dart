@@ -1,3 +1,8 @@
+/// Reusable bottom sheet shell used for all sheet-based workflows.
+///
+/// Slides up from the bottom with a drag handle, title, optional subtitle,
+/// scrollable content area, and a sticky action bar. The scrim fades in
+/// via [TweenAnimationBuilder].
 import 'package:flutter/material.dart';
 import 'package:techfix/theme/app_theme.dart';
 

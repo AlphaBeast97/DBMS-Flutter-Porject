@@ -1,3 +1,7 @@
+/// Dashboard stat card with an animated counting value.
+///
+/// Displays a [label], a large animated [value] that counts up from 0
+/// using [TweenAnimationBuilder], and an optional [icon] and [sub] line.
 import 'package:flutter/material.dart';
 import 'package:techfix/theme/app_theme.dart';
 

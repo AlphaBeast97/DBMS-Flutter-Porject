@@ -1,3 +1,7 @@
+/// Empty-state placeholder shown when a list has no items.
+///
+/// Displays a large icon in a rounded box, [title], [body] text, and
+/// an optional coral [FilledButton] action (e.g. "Create first job").
 import 'package:flutter/material.dart';
 import 'package:techfix/theme/app_theme.dart';
 
@@ -38,7 +42,6 @@ class EmptyState extends StatelessWidget {
           Text(
             title,
             style: const TextStyle(
-              
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: AppTheme.ink,
@@ -49,7 +52,6 @@ class EmptyState extends StatelessWidget {
             body,
             textAlign: TextAlign.center,
             style: TextStyle(
-              
               fontSize: 14,
               color: AppTheme.muted,
               height: 1.5,

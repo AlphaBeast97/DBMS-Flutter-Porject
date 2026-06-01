@@ -1,3 +1,7 @@
+/// Global toast/snackbar utility used for all action feedback.
+///
+/// Call [showToast] from any context with a message and optional [ToastType].
+/// The only feedback mechanism in the app — no raw SnackBar elsewhere.
 import 'package:flutter/material.dart';
 import 'package:techfix/theme/app_theme.dart';
 

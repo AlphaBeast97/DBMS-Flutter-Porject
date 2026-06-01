@@ -1,8 +1,14 @@
+/// Design system: color palette, Material 3 theme, and status helpers.
+///
+/// All color tokens are defined as static consts. The [lightTheme] getter
+/// builds the app's full [ThemeData] using Google Fonts Space Grotesk.
+/// Status helpers ([statusColor], [statusBg], [statusIcon], [statusLabel])
+/// provide consistent rendering for repair job states across screens.
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Primary brand colors
+  // --- Brand palette ---
   static const Color coral = Color(0xFFF26B4A);
   static const Color teal = Color(0xFF2A9D8F);
   static const Color sky = Color(0xFF2D7BD1);
@@ -10,7 +16,7 @@ class AppTheme {
   static const Color ink = Color(0xFF141414);
   static const Color cream = Color(0xFFF7F3ED);
 
-  // Derived warm neutrals
+  // --- Derived warm neutrals ---
   static const Color beige = Color(0xFFEFE7DA);
   static const Color line = Color(0x14141414); // rgba(20,20,20,0.08)
   static const Color line2 = Color(0x24141414); // rgba(20,20,20,0.14)
@@ -20,6 +26,8 @@ class AppTheme {
   static const Color white = Color(0xFFFFFFFF);
   static const String fontFamily = 'Space Grotesk';
 
+  /// Full Material 3 light theme with coral primary, teal secondary,
+  /// cream surface, and Space Grotesk text.
   static ThemeData get lightTheme {
     final textTheme = GoogleFonts.spaceGroteskTextTheme();
     return ThemeData(
@@ -49,6 +57,8 @@ class AppTheme {
     );
   }
 
+  /// Returns the foreground color for a given job status.
+  /// Used by [StatusBadge], [JobCard], and status icons.
   static Color statusColor(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
@@ -68,6 +78,7 @@ class AppTheme {
     }
   }
 
+  /// Returns a translucent background tint for a given status.
   static Color statusBg(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
@@ -87,6 +98,7 @@ class AppTheme {
     }
   }
 
+  /// Returns the Material icon for a given status.
   static IconData statusIcon(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
@@ -106,6 +118,7 @@ class AppTheme {
     }
   }
 
+  /// Returns the human-readable label for a given status.
   static String statusLabel(String status) {
     switch (status.toLowerCase()) {
       case 'pending':

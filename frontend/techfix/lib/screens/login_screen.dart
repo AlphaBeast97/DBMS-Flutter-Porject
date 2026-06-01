@@ -1,3 +1,12 @@
+/// Login/registration screen with role-based authentication.
+///
+/// Supports three auth modes via a segmented control:
+/// - **Owner**: sign in or sign up (creates org + owner account)
+/// - **Employee**: sign in with email + password
+/// - **Customer**: sign in with email only (no password)
+///
+/// On success, stores credentials in [AppSession] and navigates
+/// to [HomeShell]. All responses go through [showToast] for feedback.
 import 'package:flutter/material.dart';
 import 'package:techfix/config/api_config.dart';
 import 'package:techfix/screens/home_shell.dart';
@@ -8,9 +17,13 @@ import 'package:techfix/widgets/app_background.dart';
 import 'package:techfix/widgets/field.dart';
 import 'package:techfix/widgets/toast.dart';
 
+/// Which role the login form is showing for.
 enum AuthMode { owner, employee, customer }
+
+/// For Owner mode: sign in to an existing org vs. create a new one.
 enum OwnerMode { signIn, signUp }
 
+/// Brand icon — a handyman icon in a coral gradient rounded box with shadow.
 class Brandmark extends StatelessWidget {
   final double size;
 
@@ -49,11 +62,13 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  // --- Form keys for each auth mode ---
   final _ownerSignInFormKey = GlobalKey<FormState>();
   final _ownerSignUpFormKey = GlobalKey<FormState>();
   final _employeeFormKey = GlobalKey<FormState>();
   final _customerFormKey = GlobalKey<FormState>();
 
+  // --- Text controllers per mode ---
   final _ownerEmailController = TextEditingController();
   final _ownerPasswordController = TextEditingController();
   final _orgNameController = TextEditingController();
@@ -82,6 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  /// Basic email format validation (not a full RFC check).
   bool _isValidEmail(String v) => RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(v);
 
   void _switchAuthMode(AuthMode mode) {
@@ -92,6 +108,8 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _ownerMode = mode);
   }
 
+  /// Authenticates as an employee, optionally checks for a required role,
+  /// then stores the session and navigates to [HomeShell].
   Future<void> _authenticateAndGo(String email, String password, {String? requiredRole}) async {
     final session = AppSessionScope.of(context);
     final baseUrl = ApiConfig.baseUrl;
@@ -99,6 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final api = TechFixApi(baseUrl: baseUrl, email: email, password: password);
     final employee = await api.authenticateEmployee();
 
+    // Role gate: if requiredRole is set, reject accounts that don't match.
     if (requiredRole != null) {
       final role = (employee['role'] as String?)?.trim();
       if (role != requiredRole) {
@@ -114,6 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  /// Validates and submits Owner sign-in form.
   Future<void> _submitOwnerSignIn() async {
     if (!_ownerSignInFormKey.currentState!.validate()) return;
     final email = _ownerEmailController.text.trim();
@@ -139,6 +159,8 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  /// Validates and submits Owner sign-up form.
+  /// Calls [createOwner] (public API) then authenticates.
   Future<void> _submitOwnerSignUp() async {
     if (!_ownerSignUpFormKey.currentState!.validate()) return;
     final email = _ownerSignUpEmailController.text.trim();
@@ -168,6 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final password = _ownerSignUpPasswordController.text;
 
     try {
+      // Step 1: create org + owner via public endpoint
       final api = TechFixApi(baseUrl: ApiConfig.baseUrl, email: email, password: password);
       await api.createOwner(
         organizationName: orgName,
@@ -176,6 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
         password: password,
       );
 
+      // Step 2: authenticate with the newly created account
       await _authenticateAndGo(email, password);
     } catch (error) {
       showToast(context, '$error', type: ToastType.error);
@@ -184,6 +208,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  /// Validates and submits Employee sign-in form.
   Future<void> _submitEmployee() async {
     if (!_employeeFormKey.currentState!.validate()) return;
     final email = _employeeEmailController.text.trim();
@@ -209,6 +234,8 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  /// Validates and submits Customer sign-in (email only, no password).
+  /// Stores customer data with a synthetic 'role' = 'Customer'.
   Future<void> _submitCustomer() async {
     if (!_customerFormKey.currentState!.validate()) return;
     final email = _customerEmailController.text.trim();
@@ -243,6 +270,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  /// Dispatches to the correct submit handler based on current mode.
   void _submit() {
     switch (_authMode) {
       case AuthMode.owner:
@@ -272,7 +300,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Brand header
+                // --- Brand header: logo + title + tagline ---
                 Column(
                   children: [
                     const Brandmark(),
@@ -300,7 +328,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 28),
 
-                // Role segmented control
+                // --- Role segmented control: Owner / Employee / Customer ---
                 Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
@@ -336,7 +364,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 18),
 
-                // Card
+                // --- Form card with animated switcher ---
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
@@ -382,7 +410,10 @@ class _LoginScreenState extends State<LoginScreen> {
   );
   }
 
+  /// Builds the animated card content for the current auth mode.
+  /// Shows role blurb, form fields, submit button, and optional sign-up hint.
   Widget _buildCardBody() {
+    // Role-specific metadata (icon, color, description)
     final roleMeta = switch (_authMode) {
       AuthMode.owner => (
         icon: Icons.admin_panel_settings,
@@ -401,6 +432,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     };
 
+    // CTA button label and icon depend on mode
     final cta = _authMode == AuthMode.owner && _ownerMode == OwnerMode.signUp
         ? 'Create workshop'
         : 'Sign in';
@@ -414,7 +446,7 @@ class _LoginScreenState extends State<LoginScreen> {
       key: ValueKey('$_authMode-$_ownerMode'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Role blurb
+        // --- Role blurb with icon ---
         Row(
           children: [
             Container(
@@ -442,7 +474,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 18),
 
-        // Owner sign in / sign up toggle
+        // --- Owner mode toggle: Sign In / Sign Up ---
         if (_authMode == AuthMode.owner) ...[
           Container(
             padding: const EdgeInsets.all(4),
@@ -468,7 +500,7 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(height: 16),
         ],
 
-        // Owner Sign In
+        // --- Owner Sign In form ---
         if (_authMode == AuthMode.owner && _ownerMode == OwnerMode.signIn)
           Form(
             key: _ownerSignInFormKey,
@@ -496,7 +528,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
 
-        // Owner Sign Up
+        // --- Owner Sign Up form (workshop name, name, email, password) ---
         if (_authMode == AuthMode.owner && _ownerMode == OwnerMode.signUp)
           Form(
             key: _ownerSignUpFormKey,
@@ -540,7 +572,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
 
-        // Employee Sign In
+        // --- Employee Sign In form ---
         if (_authMode == AuthMode.employee)
           Form(
             key: _employeeFormKey,
@@ -568,7 +600,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
 
-        // Customer Sign In
+        // --- Customer Sign In form (email only, no password) ---
         if (_authMode == AuthMode.customer) ...[
           Container(
             padding: const EdgeInsets.all(10),
@@ -611,6 +643,8 @@ class _LoginScreenState extends State<LoginScreen> {
         ],
 
         const SizedBox(height: 18),
+
+        // --- Submit button ---
         SizedBox(
           width: double.infinity,
           child: FilledButton.icon(
@@ -644,7 +678,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
 
-        // Signup hint for owner
+        // --- Hint text shown on Owner sign-up ---
         if (_authMode == AuthMode.owner &&
             _ownerMode == OwnerMode.signUp)
           Padding(
@@ -660,13 +694,12 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
-
-        // Error message
       ],
     );
   }
 }
 
+/// A pill-style tab in the role segmented control (Owner / Employee / Customer).
 class _SegOption extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -720,6 +753,7 @@ class _SegOption extends StatelessWidget {
   }
 }
 
+/// Sign In / Sign Up toggle shown only in Owner mode.
 class _ModeToggle extends StatelessWidget {
   final String label;
   final bool selected;

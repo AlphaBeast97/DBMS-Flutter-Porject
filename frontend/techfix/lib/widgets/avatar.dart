@@ -1,3 +1,8 @@
+/// Circular avatar that shows a person's initials or an icon.
+///
+/// Derives initials from the first two words of [name]. Falls back to
+/// a question mark if the name is empty. Optionally renders an [icon]
+/// instead of initials.
 import 'package:flutter/material.dart';
 import 'package:techfix/theme/app_theme.dart';
 
@@ -35,7 +40,6 @@ class Avatar extends StatelessWidget {
             : Text(
                 _initials,
                 style: TextStyle(
-                  
                   fontWeight: FontWeight.w700,
                   fontSize: size * 0.36,
                   color: color,

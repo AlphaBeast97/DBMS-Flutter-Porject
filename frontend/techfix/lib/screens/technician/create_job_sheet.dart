@@ -1,8 +1,17 @@
+/// Multi-step bottom sheet wizard for creating a new repair job.
+///
+/// **Step 0** — Customer info (email, name, phone)
+/// **Step 1** — Device info (type, brand, model, serial)
+/// **Step 2** — Issue details (description, estimated cost)
+///
+/// On final step, calls [onCreate] with all collected form data.
+/// Uses [Sheet] shell with a stepper progress indicator.
 import 'package:flutter/material.dart';
 import 'package:techfix/theme/app_theme.dart';
 import 'package:techfix/widgets/field.dart';
 import 'package:techfix/widgets/sheet.dart';
 
+/// Device type options with icons for the type selector chips.
 const _deviceTypes = [
   ('Laptop', Icons.laptop_mac),
   ('Mobile', Icons.smartphone),
@@ -27,15 +36,19 @@ class CreateJobSheet extends StatefulWidget {
 
 class _CreateJobSheetState extends State<CreateJobSheet> {
   int _step = 0;
+
+  /// Form data map shared across all 3 steps.
+  /// Keys: cEmail, cName, cPhone, dType, brand, model, serial, desc, cost
   final _f = <String, String>{
     'cEmail': '', 'cName': '', 'cPhone': '',
-    'dType': 'Mobile', 'dIcon': 'smartphone',
+    'dType': 'Mobile',
     'brand': '', 'model': '', 'serial': '',
     'desc': '', 'cost': '',
   };
 
   void _set(String k, String v) => setState(() => _f[k] = v);
 
+  /// Validation depends on current step.
   bool get _valid {
     if (_step == 0) return _f['cEmail']!.isNotEmpty && _f['cName']!.isNotEmpty;
     if (_step == 1) return _f['brand']!.isNotEmpty && _f['model']!.isNotEmpty;
@@ -90,7 +103,7 @@ class _CreateJobSheetState extends State<CreateJobSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Stepper
+          // --- Step progress indicator ---
           Row(
             children: List.generate(_steps.length, (i) {
               final active = i <= _step;
@@ -122,7 +135,7 @@ class _CreateJobSheetState extends State<CreateJobSheet> {
           ),
           const SizedBox(height: 18),
 
-          // Step 0: Customer
+          // --- Step 0: Customer info ---
           if (_step == 0)
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,6 +172,7 @@ class _CreateJobSheetState extends State<CreateJobSheet> {
                   onChanged: (v) => _set('cPhone', v),
                   keyboardType: TextInputType.phone,
                 ),
+                // Info about duplicate email handling
                 if (!_valid && _f['cEmail']!.isNotEmpty && _f['cName']!.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Container(
@@ -184,7 +198,7 @@ class _CreateJobSheetState extends State<CreateJobSheet> {
               ],
             ),
 
-          // Step 1: Device
+          // --- Step 1: Device info ---
           if (_step == 1)
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,6 +221,7 @@ class _CreateJobSheetState extends State<CreateJobSheet> {
                   ),
                 ),
                 const SizedBox(height: 6),
+                // Device type chip selector
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -268,7 +283,7 @@ class _CreateJobSheetState extends State<CreateJobSheet> {
               ],
             ),
 
-          // Step 2: Issue
+          // --- Step 2: Issue details ---
           if (_step == 2)
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,

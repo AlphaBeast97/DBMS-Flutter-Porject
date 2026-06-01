@@ -1,3 +1,8 @@
+/// Section title row with an optional count badge and action button.
+///
+/// Used throughout the app to label content sections (e.g. "Active Jobs",
+/// "Recent Activity"). The [actionLabel]/[actionIcon] pair renders a
+/// coral text button on the right side.
 import 'package:flutter/material.dart';
 import 'package:techfix/theme/app_theme.dart';
 
@@ -38,7 +43,7 @@ class SectionHeader extends StatelessWidget {
               Text(
                 '$count',
                 style: const TextStyle(
-                                    fontSize: 13,
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: AppTheme.faint,
                 ),
@@ -62,7 +67,7 @@ class SectionHeader extends StatelessWidget {
                 Text(
                   actionLabel!,
                   style: const TextStyle(
-                                        fontSize: 14,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: AppTheme.coral,
                   ),

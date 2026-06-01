@@ -1,3 +1,6 @@
+/// Dialog for editing a repair job's description and estimated cost.
+///
+/// Pre-populates fields with existing values. Uses [TechFixDialog] shell.
 import 'package:flutter/material.dart';
 import 'package:techfix/models/repair_job.dart';
 import 'package:techfix/theme/app_theme.dart';

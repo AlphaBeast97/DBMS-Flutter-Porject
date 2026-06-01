@@ -1,3 +1,7 @@
+/// Dialog for a technician to update a job's status.
+///
+/// Shows all available statuses (Pending, Repairing, Ready, Delivered)
+/// as radio-style tappable rows with icons. Uses [TechFixDialog] shell.
 import 'package:flutter/material.dart';
 import 'package:techfix/models/repair_job.dart';
 import 'package:techfix/theme/app_theme.dart';

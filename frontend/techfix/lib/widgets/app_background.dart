@@ -1,3 +1,7 @@
+/// Full-screen background gradient with animated decorative glow circles.
+///
+/// Wraps [child] in a safe area and places three softly-colored circular
+/// blobs that slowly rotate via [AnimationController] for a subtle ambient effect.
 import 'package:flutter/material.dart';
 import 'package:techfix/theme/app_theme.dart';
 

@@ -1,3 +1,8 @@
+/// Small rounded pill/chip wrapper for tags and labels.
+///
+/// Renders [child] text inside a horizontally-padded rounded container
+/// with an optional leading [icon]. [color] controls the text/icon tint
+/// and the default background opacity; pass [bg] for a solid color.
 import 'package:flutter/material.dart';
 import 'package:techfix/theme/app_theme.dart';
 
@@ -33,7 +38,6 @@ class Pill extends StatelessWidget {
           Flexible(
             child: DefaultTextStyle(
               style: TextStyle(
-                
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
                 color: color,

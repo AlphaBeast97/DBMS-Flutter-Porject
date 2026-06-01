@@ -1,3 +1,7 @@
+/// Tappable filter chip for the job list status filters.
+///
+/// Shows [label] with a [count] badge. Uses [AnimatedContainer] to
+/// transition between active/inactive states with color and border.
 import 'package:flutter/material.dart';
 import 'package:techfix/theme/app_theme.dart';
 

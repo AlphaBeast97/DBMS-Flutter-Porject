@@ -1,3 +1,7 @@
+/// Data model for a repair job record from the backend.
+///
+/// Parses the API JSON response (field names like `job_id`, `estimated_cost`)
+/// and constructs a combined [deviceLabel] from brand + model fields.
 class RepairJob {
   final int id;
   final int deviceId;
@@ -25,6 +29,8 @@ class RepairJob {
     this.finalCost,
   });
 
+  /// Parses a JSON map from the API into a [RepairJob].
+  /// Handles snake_case and camelCase key variations for resilience.
   factory RepairJob.fromApi(Map<String, dynamic> json) {
     final deviceBrand = (json['brand'] ?? json['device_brand'] ?? '')
         .toString();

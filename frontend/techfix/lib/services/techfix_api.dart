@@ -1,3 +1,12 @@
+/// HTTP client wrapping all TechFix backend REST endpoints.
+///
+/// Every method calls one backend route, parses JSON responses,
+/// and throws [Exception] on non-2xx status codes with a
+/// human-readable error message extracted from the response body.
+///
+/// Authentication uses HTTP Basic Auth with the email/password
+/// passed to the constructor. The [createOwner] method is the only
+/// public endpoint (no auth header required).
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -15,13 +24,14 @@ class TechFixApi {
   final String email;
   final String password;
 
-  // Build Basic Auth headers
+  /// Builds HTTP Basic Auth header from stored credentials.
   Map<String, String> get _headers {
     final auth = base64Encode(utf8.encode('$email:$password'));
     return {'Authorization': 'Basic $auth', 'Content-Type': 'application/json'};
   }
 
-  // Helper method to parse error response with status code
+  /// Parses error response JSON and returns a formatted message
+  /// like `"Error 400: Invalid credentials."`.
   String _getErrorMessage(int statusCode, String response) {
     try {
       final body = jsonDecode(response) as Map<String, dynamic>;
@@ -32,9 +42,13 @@ class TechFixApi {
     }
   }
 
-  // ========== AUTHENTICATION ==========
+  // ==============================
+  //  AUTHENTICATION
+  // ==============================
 
-  /// POST /api/auth/employee - Authenticate as employee
+  /// POST /api/auth/employee
+  /// Authenticates with email+password Basic Auth.
+  /// Returns employee object: {employee_id, organization_id, name, email, role}.
   Future<Map<String, dynamic>> authenticateEmployee() async {
     final response = await http.post(
       Uri.parse('$baseUrl/api/auth/employee'),
@@ -49,7 +63,9 @@ class TechFixApi {
     return body['data'] as Map<String, dynamic>;
   }
 
-  /// POST /api/auth/customer - Authenticate as customer (email only in auth)
+  /// POST /api/auth/customer
+  /// Authenticates with email-only Basic Auth (no password).
+  /// Returns customer object: {customer_id, organization_id, name, phone, email}.
   Future<Map<String, dynamic>> authenticateCustomer(String email) async {
     final auth = base64Encode(utf8.encode('$email:'));
     final headers = {
@@ -70,9 +86,13 @@ class TechFixApi {
     return body['data'] as Map<String, dynamic>;
   }
 
-  // ========== CUSTOMERS ==========
+  // ==============================
+  //  CUSTOMERS
+  // ==============================
 
-  /// GET /api/customers/:id - Get customer with devices and repair jobs
+  /// GET /api/customers/:customerId
+  /// Returns full customer profile with devices, repair jobs, and inventory usage.
+  /// Used by employee/manager screens to view customer history.
   Future<Map<String, dynamic>> getCustomerDetail(int customerId) async {
     final response = await http.get(
       Uri.parse('$baseUrl/api/customers/$customerId'),
@@ -87,7 +107,9 @@ class TechFixApi {
     return body['data'] as Map<String, dynamic>;
   }
 
-  /// GET /api/customers/me - Get authenticated customer's own data
+  /// GET /api/customers/me
+  /// Returns the authenticated customer's own data.
+  /// Used by the customer self-service portal.
   Future<Map<String, dynamic>> getCustomerMe() async {
     final response = await http.get(
       Uri.parse('$baseUrl/api/customers/me'),
@@ -102,7 +124,9 @@ class TechFixApi {
     return body['data'] as Map<String, dynamic>;
   }
 
-  /// POST /api/customers - Create a new customer
+  /// POST /api/customers
+  /// Creates a new customer under the authenticated employee's organization.
+  /// Returns the new customer_id.
   Future<int> createCustomer({
     required String name,
     required String phone,
@@ -122,9 +146,13 @@ class TechFixApi {
     return body['data']['customer_id'] as int;
   }
 
-  // ========== DEVICES ==========
+  // ==============================
+  //  DEVICES
+  // ==============================
 
-  /// POST /api/devices - Register a new device for a customer
+  /// POST /api/devices
+  /// Registers a new device under an existing customer.
+  /// Returns the new device_id.
   Future<int> createDevice({
     required int customerId,
     required String type,
@@ -152,9 +180,15 @@ class TechFixApi {
     return body['data']['device_id'] as int;
   }
 
-  // ========== REPAIR JOBS ==========
+  // ==============================
+  //  REPAIR JOBS
+  // ==============================
 
-  /// GET /api/repair-jobs - Get all repair jobs (optionally filtered by status)
+  /// GET /api/repair-jobs
+  /// Lists repair jobs. Optional query params:
+  /// - status: filter by status (Pending, Repairing, Ready, Delivered, Cancelled)
+  /// - organization_id: owner/manager view (all org jobs)
+  /// Without org_id, returns only the authenticated employee's jobs.
   Future<List<Map<String, dynamic>>> getRepairJobs({String? status, int? organizationId}) async {
     final queryParams = <String, String>{};
     if (status != null) queryParams['status'] = status;
@@ -173,7 +207,9 @@ class TechFixApi {
     return data.cast<Map<String, dynamic>>();
   }
 
-  /// POST /api/repair-jobs - Create a new repair job
+  /// POST /api/repair-jobs
+  /// Creates a new repair job for a device.
+  /// Returns the new job_id.
   Future<int> createRepairJob({
     required int deviceId,
     required String description,
@@ -199,7 +235,9 @@ class TechFixApi {
     return body['data']['job_id'] as int;
   }
 
-  /// PUT /api/repair-jobs/:job_id - Update repair job status
+  /// PUT /api/repair-jobs/:jobId
+  /// Updates the status of a repair job (e.g., Pending → Repairing).
+  /// Returns the updated job data.
   Future<Map<String, dynamic>> updateRepairJobStatus({
     required int jobId,
     required String status,
@@ -218,7 +256,9 @@ class TechFixApi {
     return body['data'] as Map<String, dynamic>;
   }
 
-  /// PUT /api/repair-jobs/:job_id/description - Update repair job description
+  /// PUT /api/repair-jobs/:jobId/description
+  /// Updates the description (and optionally estimated cost) of a job.
+  /// Returns the updated job data.
   Future<Map<String, dynamic>> updateJobDescription({
     required int jobId,
     required String description,
@@ -237,7 +277,9 @@ class TechFixApi {
     return body['data'] as Map<String, dynamic>;
   }
 
-  /// POST /api/repair-jobs/:job_id/cancel - Cancel a repair job
+  /// POST /api/repair-jobs/:jobId/cancel
+  /// Cancels a pending repair job (customer-only action).
+  /// Returns the updated job data.
   Future<Map<String, dynamic>> cancelRepairJob(int jobId) async {
     final response = await http.post(
       Uri.parse('$baseUrl/api/repair-jobs/$jobId/cancel'),
@@ -252,9 +294,13 @@ class TechFixApi {
     return body['data'] as Map<String, dynamic>;
   }
 
-  // ========== INVENTORY USAGE ==========
+  // ==============================
+  //  INVENTORY USAGE
+  // ==============================
 
-  /// POST /api/inventory-usage - Log parts used on a repair job
+  /// POST /api/inventory-usage
+  /// Logs a part used on a repair job.
+  /// Returns the new usage_id.
   Future<int> logPartUsage({
     required int jobId,
     required String partName,
@@ -278,9 +324,13 @@ class TechFixApi {
     return body['data']['usage_id'] as int;
   }
 
-  // ========== EMPLOYEES ==========
+  // ==============================
+  //  EMPLOYEES
+  // ==============================
 
-  /// POST /api/employees/owner - Create owner + organization (public, no auth)
+  /// POST /api/employees/owner
+  /// Public endpoint — creates a new organization + owner in one call.
+  /// No auth header required. Returns org_id and owner_employee_id.
   Future<Map<String, dynamic>> createOwner({
     required String organizationName,
     required String ownerName,
@@ -307,7 +357,9 @@ class TechFixApi {
     return body['data'] as Map<String, dynamic>;
   }
 
-  /// POST /api/employees - Create a new employee (Owner/Manager only)
+  /// POST /api/employees
+  /// Creates a new employee under the authenticated owner's organization.
+  /// Returns the new employee_id.
   Future<int> createEmployee({
     required String name,
     required String email,
@@ -327,8 +379,13 @@ class TechFixApi {
     return body['data']['employee_id'] as int;
   }
 
-  /// Fetch inventory usage for a list of jobs grouped by job ID.
-  /// Shared by technician and manager screens.
+  // ==============================
+  //  UTILITY: batch usage fetch
+  // ==============================
+
+  /// Fetches inventory usage for a list of jobs, grouped by job ID.
+  /// Iterates over unique customer IDs in the job list and calls
+  /// [getCustomerDetail] for each. Used by technician and manager screens.
   static Future<Map<int, List<InventoryUsage>>> fetchUsagesForJobs(
     TechFixApi api,
     List<RepairJob> jobs,

@@ -1,3 +1,7 @@
+/// Dialog for the Owner/Manager to add a new technician employee.
+///
+/// Uses the [TechFixDialog] shell. Validates name (non-empty),
+/// email (regex), and password (>= 6 chars) before calling [onAdd].
 import 'package:flutter/material.dart';
 import 'package:techfix/theme/app_theme.dart';
 import 'package:techfix/widgets/field.dart';
@@ -22,6 +26,7 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
   final _emailCtl = TextEditingController();
   final _pwCtl = TextEditingController();
 
+  /// All fields must be valid for the Add button to be enabled.
   bool get _valid => _nameCtl.text.isNotEmpty &&
       _emailCtl.text.isNotEmpty &&
       RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(_emailCtl.text) &&
@@ -69,6 +74,7 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
             obscureText: true,
           ),
           const SizedBox(height: 12),
+          // Info box explaining what the new staff member can do
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(

@@ -1,3 +1,8 @@
+/// Badge that displays a job status with its associated color and icon.
+///
+/// Uses [AppTheme]'s status helpers ([statusBg], [statusColor],
+/// [statusIcon], [statusLabel]) to render a compact pill.
+/// [sm] reduces the size for tighter layouts.
 import 'package:flutter/material.dart';
 import 'package:techfix/theme/app_theme.dart';
 
@@ -24,7 +29,6 @@ class StatusBadge extends StatelessWidget {
           Text(
             AppTheme.statusLabel(s),
             style: TextStyle(
-              
               fontSize: sm ? 11.5 : 12.5,
               fontWeight: FontWeight.w600,
               color: AppTheme.statusColor(s),

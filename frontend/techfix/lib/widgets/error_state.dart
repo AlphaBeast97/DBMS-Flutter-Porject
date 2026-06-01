@@ -1,3 +1,7 @@
+/// Full-width error placeholder with a cloud-off icon, title, body, and retry button.
+///
+/// Used when an API call fails. The [onRetry] callback renders a coral
+/// "Try again" outlined button.
 import 'package:flutter/material.dart';
 import 'package:techfix/theme/app_theme.dart';
 
@@ -32,7 +36,6 @@ class ErrorState extends StatelessWidget {
           Text(
             title,
             style: const TextStyle(
-              
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: AppTheme.ink,
@@ -43,7 +46,6 @@ class ErrorState extends StatelessWidget {
             body,
             textAlign: TextAlign.center,
             style: TextStyle(
-              
               fontSize: 14,
               color: AppTheme.muted,
               height: 1.5,

@@ -1,3 +1,7 @@
+/// Data model for an inventory usage record (part logged against a repair job).
+///
+/// Each instance represents one part used during a repair, with its
+/// name, cost, and the employee who logged it.
 class InventoryUsage {
   final int jobId;
   final String partName;
@@ -13,6 +17,7 @@ class InventoryUsage {
     required this.createdAt,
   });
 
+  /// Parses a JSON map from the API into an [InventoryUsage].
   factory InventoryUsage.fromApi(Map<String, dynamic> json) {
     double parseAmount(dynamic value) {
       if (value is num) return value.toDouble();

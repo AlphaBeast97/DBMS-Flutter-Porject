@@ -1,3 +1,11 @@
+/// Owner/Manager dashboard showing revenue, job status distribution,
+/// and a list of all repair jobs across the organization.
+///
+/// Features:
+/// - **Donut chart** of job status distribution (via [DonutPainter])
+/// - **Revenue card** with finalized vs. estimated costs and a progress bar
+/// - **Job list** with pagination ("Show more") and staggered fade-in
+/// - **Add Staff** dialog overlay (Owner only)
 import 'package:flutter/material.dart';
 import 'package:techfix/models/repair_job.dart';
 import 'package:techfix/models/inventory_usage.dart';
@@ -16,9 +24,6 @@ import 'package:techfix/widgets/loading_state.dart';
 import 'package:techfix/widgets/section_header.dart';
 import 'package:techfix/widgets/toast.dart';
 
-// ─────────────────────────────────────────────────────────────
-// ManagerScreen
-// ─────────────────────────────────────────────────────────────
 class ManagerScreen extends StatefulWidget {
   const ManagerScreen({super.key});
 
@@ -37,6 +42,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
     _jobsFuture = _loadData();
   }
 
+  /// Fetches all jobs for the organization and their inventory usage.
   Future<({List<RepairJob> jobs, Map<int, List<InventoryUsage>> usages})> _loadData() async {
     final session = AppSessionScope.of(context);
     final api = TechFixApi(
@@ -75,6 +81,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
                 ),
               ),
               actions: [
+                // Add staff button (visible only to Owner)
                 IconButton(
                   onPressed: () => setState(() => _showAddStaff = true),
                   icon: Container(
@@ -92,6 +99,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
             body: FutureBuilder(
               future: _jobsFuture,
               builder: (context, snapshot) {
+                // --- Loading state ---
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Padding(
                     padding: EdgeInsets.fromLTRB(18, 4, 18, 0),
@@ -99,6 +107,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
                   );
                 }
 
+                // --- Error state ---
                 if (snapshot.hasError) {
                   return Padding(
                     padding: const EdgeInsets.fromLTRB(18, 4, 18, 0),
@@ -109,6 +118,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
                   );
                 }
 
+                // --- Empty state ---
                 final data = snapshot.data!;
                 final jobs = data.jobs;
                 final jobUsages = data.usages;
@@ -121,7 +131,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
                   );
                 }
 
-                // Compute stats
+                // --- Stats computation ---
                 final pending = jobs.where((j) => j.status.toLowerCase() == 'pending').length;
                 final repairing = jobs.where((j) => j.status.toLowerCase() == 'repairing' || j.status.toLowerCase() == 'in progress').length;
                 final ready = jobs.where((j) => j.status.toLowerCase() == 'ready').length;
@@ -134,6 +144,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
                 final finalizedPct = revenueTarget > 0 ? ((totalFinal / revenueTarget) * 100).round() : 0;
                 final estPct = revenueTarget > 0 ? ((totalEstimated / revenueTarget) * 100).round() : 0;
 
+                // Distribution data for donut chart (skip zeroes)
                 final distribution = [
                   if (pending > 0) (status: 'pending', count: pending),
                   if (repairing > 0) (status: 'repairing', count: repairing),
@@ -147,7 +158,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(18, 8, 18, 32),
                   children: [
-                    // Status distribution card
+                    // --- Status distribution card with donut chart ---
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(18),
@@ -163,6 +174,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
                           const SizedBox(height: 12),
                           Row(
                             children: [
+                              // Donut chart
                               SizedBox(
                                 width: 150,
                                 height: 150,
@@ -189,7 +201,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
                                         ),
                                         const Text(
                                           'total jobs',
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             
                                             fontSize: 11.5,
                                             fontWeight: FontWeight.w600,
@@ -202,6 +214,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
                                 ),
                               ),
                               const SizedBox(width: 18),
+                              // Legend
                               Expanded(
                                 child: Column(
                                   children: distribution.map((d) {
@@ -250,7 +263,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
                     ),
                     const SizedBox(height: 12),
 
-                    // Revenue card
+                    // --- Revenue card with progress bar ---
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(18),
@@ -327,6 +340,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
                             ],
                           ),
                           const SizedBox(height: 16),
+                          // Progress bar toward target
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -357,11 +371,14 @@ class _ManagerScreenState extends State<ManagerScreen> {
                               height: 12,
                               child: Stack(
                                 children: [
+                                  // Background
                                   Container(color: AppTheme.cream),
+                                  // Projected bar (estimated cost)
                                   FractionallySizedBox(
                                     widthFactor: (estPct / 100).clamp(0, 1),
                                     child: Container(color: AppTheme.teal.withOpacity(0.3)),
                                   ),
+                                  // Finalized bar
                                   FractionallySizedBox(
                                     widthFactor: (finalizedPct / 100).clamp(0, 1),
                                     child: Container(color: AppTheme.teal),
@@ -382,6 +399,8 @@ class _ManagerScreenState extends State<ManagerScreen> {
                       ),
                     ),
                     const SizedBox(height: 18),
+
+                    // --- All repairs list with pagination ---
                     SectionHeader(title: 'All repairs', count: jobs.length),
                     const SizedBox(height: 12),
                     ...(jobs.toList()..sort((a, b) => b.id.compareTo(a.id))).take(_jobLimit).toList().asMap().entries.map((e) => Padding(
@@ -415,6 +434,7 @@ class _ManagerScreenState extends State<ManagerScreen> {
           ),
         ),
 
+        // --- Add Staff dialog overlay ---
         if (_showAddStaff)
           AddStaffDialog(
             onClose: () => setState(() => _showAddStaff = false),
@@ -441,5 +461,3 @@ class _ManagerScreenState extends State<ManagerScreen> {
     );
   }
 }
-
-

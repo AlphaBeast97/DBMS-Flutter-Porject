@@ -1,3 +1,8 @@
+/// Reusable text input field used across all forms in the app.
+///
+/// Supports single-line, multiline, icons, obscure text, auto-focus,
+/// keyboard actions, and a suffix widget. Uses [AnimatedContainer]
+/// to highlight the border on focus.
 import 'package:flutter/material.dart';
 import 'package:techfix/theme/app_theme.dart';
 

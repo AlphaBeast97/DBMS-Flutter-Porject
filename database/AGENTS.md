@@ -26,5 +26,5 @@
 - **Trigger**: `tr_repair_jobs_delivered_cost` auto-calculates `final_cost` on status → `Delivered`.
 
 ## Documentation
-- `database/DATABASE_DOCUMENTATION.md` — ERD, EERD, status state machine, table specs, procedure catalog, trigger details, seed walkthrough, call sequences.
+- `database/DATABASE_DOCUMENTATION.md` — Full DBMS report: Intro, Domain, Problem, Novelty, ERD, constraints, DBMS features catalog, use-case diagram, sample query results, trigger details, procedure catalog, seed walkthrough, and conclusion.
 - Root `DOCUMENTATION.md` — Architecture overview with smaller ERD and procedure list.

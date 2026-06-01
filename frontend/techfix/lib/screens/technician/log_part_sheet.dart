@@ -1,3 +1,7 @@
+/// Bottom sheet for logging a part (inventory usage) against a job.
+///
+/// Displays a radio-style list of active jobs, then fields for
+/// part name and cost. Uses [Sheet] shell.
 import 'package:flutter/material.dart';
 import 'package:techfix/models/repair_job.dart';
 import 'package:techfix/theme/app_theme.dart';
@@ -69,6 +73,7 @@ class _LogPartSheetState extends State<LogPartSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Job selector
           const Text(
             'Assign to job',
             style: TextStyle(
@@ -130,6 +135,7 @@ class _LogPartSheetState extends State<LogPartSheet> {
             );
           }),
           const SizedBox(height: 16),
+          // Part name field
           Field(
             label: 'Part name',
             icon: Icons.build,
@@ -138,6 +144,7 @@ class _LogPartSheetState extends State<LogPartSheet> {
             autoFocus: true,
           ),
           const SizedBox(height: 10),
+          // Part cost field
           Field(
             label: 'Part cost (\$)',
             icon: Icons.payments,

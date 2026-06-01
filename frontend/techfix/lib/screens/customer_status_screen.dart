@@ -1,3 +1,11 @@
+/// Customer self-service screen.
+///
+/// Shows a customer's profile, their devices, and repair job statuses.
+/// - For **Customer** role: auto-loads the logged-in customer's data.
+/// - For **Employee/Manager** role: shows a search bar to look up a customer by ID.
+///
+/// Features device cards that expand into a job detail dialog,
+/// with cancel and pickup-status actions where applicable.
 import 'package:flutter/material.dart';
 import 'package:techfix/models/repair_job.dart';
 import 'package:techfix/services/techfix_api.dart';
@@ -36,6 +44,8 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
     super.dispose();
   }
 
+  /// On first build, checks if the logged-in user has 'Customer' role.
+  /// If so, auto-loads their data (no search bar needed).
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -55,6 +65,8 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
     }
   }
 
+  /// Loads customer data by ID from the search field.
+  /// Used by employee/manager roles.
   void _loadCustomer() {
     final session = AppSessionScope.of(context);
     final id = int.tryParse(_customerIdController.text.trim());
@@ -76,6 +88,8 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
     });
   }
 
+  /// Cancels a pending repair job via [cancelRepairJob] API.
+  /// Refreshes the customer data on success.
   Future<void> _cancelJob(int jobId) async {
     final session = AppSessionScope.of(context);
     try {
@@ -88,6 +102,7 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
       if (!mounted) return;
       showToast(context, 'Job cancelled successfully.');
 
+      // Refresh data after cancellation
       setState(() {
         if (_isCustomerRole) {
           _customerFuture = TechFixApi(
@@ -109,11 +124,13 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
     }
   }
 
+  /// Safely converts a dynamic value to string with fallback.
   String _asText(dynamic value, {String fallback = '\u2014'}) {
     final text = value?.toString().trim() ?? '';
     return text.isEmpty ? fallback : text;
   }
 
+  /// Formats a date string to short form like "Jun '26".
   String _shortDate(String raw) {
     final dt = DateTime.tryParse(raw);
     if (dt == null) return raw;
@@ -122,6 +139,7 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
     return '${months[dt.month - 1]} \'$y';
   }
 
+  /// Builds a device label from brand + model fields.
   String _deviceLabel(Map<String, dynamic> device) {
     final brand = _asText(device['brand'], fallback: '');
     final model = _asText(device['model'], fallback: '');
@@ -130,6 +148,7 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
     return parts.isNotEmpty ? parts.join(' ') : type;
   }
 
+  /// Maps device type to an icon name string.
   String _deviceIcon(Map<String, dynamic> device) {
     final type = _asText(device['type'], fallback: '').toLowerCase();
     if (type.contains('phone') || type.contains('mobile')) return 'smartphone';
@@ -141,6 +160,7 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
     return 'devices_other';
   }
 
+  /// Maps device type to [IconData] for display.
   IconData _deviceIconData(Map<String, dynamic> device) {
     final icon = _deviceIcon(device);
     switch (icon) {
@@ -154,6 +174,8 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
     }
   }
 
+  /// Opens a dialog showing all repair jobs for a specific device,
+  /// with cancel (if Pending) and pickup-ready status display.
   void _showDeviceJobsDialog(Map<String, dynamic> device, List<RepairJob> allJobs) {
     final deviceId = device['device_id'] as int;
     final deviceJobs = allJobs.where((job) => job.deviceId == deviceId).toList();
@@ -194,6 +216,7 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        // --- Dialog header: device icon + name + close ---
                         Row(
                           children: [
                             Container(
@@ -238,6 +261,8 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
                           ],
                         ),
                         const SizedBox(height: 16),
+
+                        // --- Scrollable job list for this device ---
                         Flexible(
                           child: ListView(
                             shrinkWrap: true,
@@ -253,6 +278,7 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
+                                    // Job ID + status badge
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
@@ -269,6 +295,7 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
                                       ],
                                     ),
                                     const SizedBox(height: 8),
+                                    // Description
                                     Text(
                                       job.description,
                                       style: const TextStyle(
@@ -279,6 +306,7 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
                                       ),
                                     ),
                                     const SizedBox(height: 11),
+                                    // Cost + action buttons
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
@@ -356,6 +384,7 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
     );
   }
 
+  /// Screen header with title and sign-out button.
   Widget _buildHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -387,6 +416,7 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
     );
   }
 
+  /// Search bar for employee/manager to look up a customer by ID.
   Widget _buildSearchBar() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -435,6 +465,7 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
     );
   }
 
+  /// Main content: loads customer data, shows loading/error/empty/success states.
   Widget _buildContent() {
     if (_customerFuture == null && !_isCustomerRole) {
       return const Text(
@@ -468,6 +499,7 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
           );
         }
 
+        // --- Success: parse customer, devices, and jobs ---
         final data = snapshot.data!;
         final customer = (data['customer'] as Map<String, dynamic>?) ?? data;
         final devices = (data['devices'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
@@ -480,6 +512,7 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
         final customerPhone = _asText(customer['phone']);
         final memberSince = _asText(customer['since'] ?? customer['created_at']);
 
+        // Stats computation
         final activeJobs = allJobs
             .where((j) => j.status.toLowerCase() != 'cancelled' && j.status.toLowerCase() != 'delivered')
             .length;
@@ -510,6 +543,7 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
     );
   }
 
+  /// Customer profile card with avatar, name, phone, member badge.
   Widget _buildProfileCard(String name, String phone, String memberSince) {
     return Container(
       width: double.infinity,
@@ -583,6 +617,7 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
     );
   }
 
+  /// Statistics row showing active repairs and ready-for-pickup counts.
   Widget _buildStats(int activeJobs, int readyCount) {
     return Row(
       children: [
@@ -609,6 +644,8 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
     );
   }
 
+  /// Device list section with staggered fade-in animation.
+  /// Each device card shows icon, label, job count, and lead status badge.
   Widget _buildDeviceSection(List<Map<String, dynamic>> devices, List<RepairJob> allJobs) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -630,6 +667,7 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
             final i = e.key;
             final device = e.value;
             final deviceJobsForCard = allJobs.where((j) => j.deviceId == (device['device_id'] as int)).toList();
+            // Find the leading status to show as badge: ready > active > first
             final act = deviceJobsForCard.where((j) => j.status.toLowerCase() == 'pending' || j.status.toLowerCase() == 'repairing').firstOrNull;
             final rdy = deviceJobsForCard.where((j) => j.status.toLowerCase() == 'ready').firstOrNull;
             final lead = rdy ?? act ?? deviceJobsForCard.firstOrNull;
@@ -649,6 +687,7 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
                   ),
                   child: Row(
                     children: [
+                      // Device icon
                       Container(
                         width: 46,
                         height: 46,
@@ -659,6 +698,7 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
                         child: Icon(_deviceIconData(device), size: 24, color: AppTheme.ink),
                       ),
                       const SizedBox(width: 13),
+                      // Label + job count
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -681,6 +721,7 @@ class _CustomerStatusScreenState extends State<CustomerStatusScreen> {
                           ],
                         ),
                       ),
+                      // Status badge + chevron
                       if (lead != null)
                         Padding(
                           padding: const EdgeInsets.only(right: 8),

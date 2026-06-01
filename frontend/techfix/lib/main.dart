@@ -1,3 +1,5 @@
+/// App entry point. Loads environment variables, initializes session state,
+/// and renders the root [TechFixApp] widget wrapped in [AppSessionScope].
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:techfix/config/api_config.dart';
@@ -11,6 +13,8 @@ Future<void> main() async {
   runApp(const TechFixApp());
 }
 
+/// Root MaterialApp widget. Creates the [AppSession] and provides it
+/// down the widget tree via [AppSessionScope].
 class TechFixApp extends StatefulWidget {
   const TechFixApp({super.key});
 
