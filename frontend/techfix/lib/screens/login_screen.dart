@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 /// Login/registration screen with role-based authentication.
 ///
 /// Supports three auth modes via a segmented control:
