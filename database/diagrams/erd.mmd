@@ -1,0 +1,10 @@
+erDiagram
+    organizations ||--o{ employees : employs
+    organizations ||--o{ customers : serves
+    customers ||--o{ devices : owns
+    devices ||--o{ repair_jobs : has
+    repair_jobs ||--o{ inventory_usage : consumes
+    employees ||--o{ customers : "created by"
+    employees ||--o{ devices : "created by"
+    employees ||--o{ repair_jobs : "created by"
+    employees ||--o{ inventory_usage : "logged by"

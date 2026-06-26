@@ -1,0 +1,10 @@
+stateDiagram-v2
+    [*] --> Pending : Job created
+    Pending --> Repairing : Technician starts
+    Repairing --> Ready : Technician completes
+    Ready --> Delivered : Customer picks up
+    Pending --> Cancelled : Customer cancels
+    Ready --> Cancelled : Customer cancels
+    Delivered --> [*]
+    Cancelled --> [*]
+    note right of Delivered : Trigger auto-calculates final_cost

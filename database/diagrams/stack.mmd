@@ -1,0 +1,18 @@
+graph TB
+    subgraph Frontend
+        F[Flutter 3.x]
+    end
+    subgraph Backend
+        N[Node.js + Express 5]
+    end
+    subgraph Database
+        M[MySQL 8.0]
+        SP[Stored Procedures]
+        TR[Triggers]
+        FN[Functions]
+    end
+    F -->|HTTP Basic Auth| N
+    N -->|CALL sp_*| M
+    M --> SP
+    M --> TR
+    M --> FN
