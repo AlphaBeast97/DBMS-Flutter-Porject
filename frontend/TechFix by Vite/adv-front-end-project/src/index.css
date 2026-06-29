@@ -1,1 +1,103 @@
+/* Tailwind v4 theme — TechFix design tokens, shadcn semantic CSS variables, Space Grotesk font */
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: "Space Grotesk", sans-serif;
+  --font-heading: "Space Grotesk", sans-serif;
+
+  --color-coral: #F26B4A;
+  --color-teal: #2A9D8F;
+  --color-sky: #2D7BD1;
+  --color-clay: #B86B4B;
+  --color-ink: #141414;
+  --color-cream: #F7F3ED;
+  --color-beige: #EFE7DA;
+  --color-grey: #9A958C;
+
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --background: #F7F3ED;
+  --foreground: #141414;
+  --card: #EFE7DA;
+  --card-foreground: #141414;
+  --popover: #EFE7DA;
+  --popover-foreground: #141414;
+  --primary: #F26B4A;
+  --primary-foreground: #F7F3ED;
+  --secondary: #2A9D8F;
+  --secondary-foreground: #F7F3ED;
+  --muted: #9A958C;
+  --muted-foreground: #9A958C;
+  --accent: #2D7BD1;
+  --accent-foreground: #F7F3ED;
+  --destructive: #e05a3a;
+  --border: color-mix(in srgb, #141414 12%, transparent);
+  --input: color-mix(in srgb, #141414 12%, transparent);
+  --ring: #F26B4A;
+  --radius: 0.75rem;
+  --chart-1: #F26B4A;
+  --chart-2: #2A9D8F;
+  --chart-3: #2D7BD1;
+  --chart-4: #B86B4B;
+  --chart-5: #9A958C;
+  --sidebar: #EFE7DA;
+  --sidebar-foreground: #141414;
+  --sidebar-primary: #F26B4A;
+  --sidebar-primary-foreground: #F7F3ED;
+  --sidebar-accent: color-mix(in srgb, #141414 6%, transparent);
+  --sidebar-accent-foreground: #141414;
+  --sidebar-border: color-mix(in srgb, #141414 12%, transparent);
+  --sidebar-ring: #F26B4A;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
